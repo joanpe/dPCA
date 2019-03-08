@@ -36,8 +36,8 @@ Xtrial = np.zeros((n_trials, N, T, S))
 for t in range(T):
     x1 = np.random.multivariate_normal(means[0], corr, size=n_trials)
     x2 = np.random.multivariate_normal(means[1], corr, size=n_trials)
-    Xtrial[:, :, t, 0] = x1*noise+2*t
-    Xtrial[:, :, t, 1] = x2*noise+2*t
+    Xtrial[:, :, t, 0] = x1+t
+    Xtrial[:, :, t, 1] = x2+t
 
 
 # trial-average data
@@ -64,6 +64,17 @@ Xc = X-np.mean(X.reshape((N, -1)), 1)[:, None, None]
 #
 #plt.show()
 #
+
+# Figure of all data points for 1 time step. 1 trial
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(Xtrial[:, 0, T-1, 0], Xtrial[:, 1, T-1, 0], Xtrial[:, 2, T-1, 0], c='b')
+ax.scatter(Xtrial[:, 0, T-1, 1], Xtrial[:, 1, T-1, 1], Xtrial[:, 2, T-1, 1], c='r') 
+ax.set_xlabel('Neuron1')
+ax.set_ylabel('Neuron2')
+ax.set_zlabel('Neuron3')
+
+plt.show()
 
 
 #dPCA

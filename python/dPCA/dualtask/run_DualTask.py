@@ -69,11 +69,36 @@ NOISE_SCALE = 0.5  # Standard deviation of noise added to initial states
 N_INITS = 1024  # The number of initial states to provide
 
 n_bits = dt.hps.data_hps['n_bits']
+n_batch = dt.hps.data_hps['n_batch']
+n_states = dt.hps.n_hidden
+n_time = dt.hps.data_hps['n_time']
 is_lstm = dt.hps.rnn_type == 'lstm'
 
 
 example_predictions = dt.predict(example_trials,
                                  do_predict_full_LSTM_state=is_lstm)
+
+'''Reordering of the example predictions in order to input to dPCA.'''
+
+# number of elements for S1 and for S2
+n0 = np.shape(np.where(example_trials['stim_conf'][:, 0]==0)[0])[0]
+n1 = np.shape(np.where(example_trials['stim_conf'][:, 0]==1)[0])[0]
+
+# Arrays of the elements corresponding to S1 and S2 of different sizes
+predictions0 = np.zeros([n0, n_states, n_time])
+predictions1 = np.zeros([n1, n_states, n_time])
+
+
+for ind_state in range(n_states):
+    predictions0[:, ind_state, :] = example_predictions['state'][
+            example_trials['stim_conf'][:, 0]==0, :, ind_state]
+    
+    predictions1[:, ind_state, :] = example_predictions['state'][
+            example_trials['stim_conf'][:, 0]==1, :, ind_state]       
+
+    
+
+        
 
 
 #

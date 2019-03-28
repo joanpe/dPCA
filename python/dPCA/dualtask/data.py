@@ -70,7 +70,10 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
 
 
 def get_stims(stim, n_batch):
-    choice = np.random.choice(stim.shape[0], size=(n_batch, ))
+#   choice = np.random.choice(stim.shape[0], size=(n_batch, ), p=[0.5, 0.5])
+    choice = np.concatenate((np.zeros(int(n_batch/2,)),
+                             np.ones(int(n_batch/2,)))).astype(int)
+    np.random.shuffle(choice)
     stim_seq = stim[choice].astype(int)
     return stim_seq, choice
 

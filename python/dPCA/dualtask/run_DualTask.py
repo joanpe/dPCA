@@ -81,8 +81,8 @@ example_predictions = dt.predict(example_trials,
 '''Reordering of the example predictions in order to input to dPCA.'''
 
 # number of elements for S1 and for S2
-n0 = np.shape(np.where(example_trials['stim_conf'][:, 0]==0)[0])[0]
-n1 = np.shape(np.where(example_trials['stim_conf'][:, 0]==1)[0])[0]
+n0 = np.shape(np.where(example_trials['stim_conf'][:, 0] == 0)[0])[0]
+n1 = np.shape(np.where(example_trials['stim_conf'][:, 0] == 1)[0])[0]
 
 # Arrays of the elements corresponding to S1 and S2 of different sizes
 predictions0 = np.zeros([n0, n_states, n_time])
@@ -91,14 +91,26 @@ predictions1 = np.zeros([n1, n_states, n_time])
 
 for ind_state in range(n_states):
     predictions0[:, ind_state, :] = example_predictions['state'][
-            example_trials['stim_conf'][:, 0]==0, :, ind_state]
-    
+            example_trials['stim_conf'][:, 0] == 0, :, ind_state]
+
     predictions1[:, ind_state, :] = example_predictions['state'][
-            example_trials['stim_conf'][:, 0]==1, :, ind_state]       
+            example_trials['stim_conf'][:, 0] == 1, :, ind_state]
 
-    
+predictions = np.stack((predictions0, predictions1), axis=3)
 
-        
+# trial-average data
+pred_mean = np.mean(predictions, 0)
+
+# center data
+pred_mean -= np.mean(pred_mean.reshape((n_states, -1)), 1)[:, None, None]
+
+dpca = dPCA(labels='st', regularizer='auto')
+dpca.protect = ['t']
+
+Z = dpca.fit_transform(pred_mean, predictions)
+
+
+
 
 
 #

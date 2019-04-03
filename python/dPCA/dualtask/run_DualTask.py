@@ -11,7 +11,10 @@ from __future__ import print_function
 
 # import pdb
 import sys
+import os
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 PATH = '/home/joan/dPCA/python/dPCA'
 sys.path.insert(0, PATH)
@@ -40,7 +43,7 @@ hps = {
         'n_time': 20,
         'n_bits': 6,
         'noise': 0.05,
-        'gng_time': 0,
+        'gng_time': 10,
         'lamb': 0,
         'delay_max': 0},
     'alr_hps': alr_hps
@@ -59,20 +62,15 @@ f = dt.plot_trials(example_trials)
 #           visualize  *******************************************************
 # *****************************************************************************
 
-'''Initial states are sampled from states observed during realistic behavior
-of the network. Because a well-trained network transitions instantaneously
-from one stable state to another, observed networks states spend little if any
-time near the unstable fixed points. In order to identify ALL fixed points,
-noise must be added to the initial states before handing them to the fixed
-point finder.'''
-NOISE_SCALE = 0.5  # Standard deviation of noise added to initial states
-N_INITS = 1024  # The number of initial states to provide
 
 n_bits = dt.hps.data_hps['n_bits']
 n_batch = dt.hps.data_hps['n_batch']
 n_states = dt.hps.n_hidden
 n_time = dt.hps.data_hps['n_time']
 is_lstm = dt.hps.rnn_type == 'lstm'
+gng_time = dt.hps.data_hps['gng_time']
+lamb = dt.hps.data_hps['lamb']
+delay_max = dt.hps.data_hps['delay_max']
 
 
 example_predictions = dt.predict(example_trials,
@@ -80,6 +78,7 @@ example_predictions = dt.predict(example_trials,
 
 '''Reordering of the example predictions in order to input to dPCA.'''
 
+'''S1 and S2 as a condition'''
 # number of elements for S1 and for S2
 n0 = np.shape(np.where(example_trials['stim_conf'][:, 0] == 0)[0])[0]
 n1 = np.shape(np.where(example_trials['stim_conf'][:, 0] == 1)[0])[0]
@@ -104,111 +103,610 @@ pred_mean = np.mean(predictions, 0)
 # center data
 pred_mean -= np.mean(pred_mean.reshape((n_states, -1)), 1)[:, None, None]
 
-dpca = dPCA(labels='st', regularizer='auto')
-dpca.protect = ['t']
+'''dPCA transform'''
+
+dpca = dPCA(labels='ts', regularizer='auto')
+dpca.protect = ['s']
 
 Z = dpca.fit_transform(pred_mean, predictions)
 
 
+'''Ploting the activations of 3 neurons for each stimulus'''
+FIG_WIDTH = 6  # inches
+FIG_HEIGHT = 6  # inches
+FONT_WEIGHT = 'bold'
+        
+        
+#fig = plt.figure(figsize=(FIG_WIDTH, FIG_HEIGHT), tight_layout=True)
+#
+#ax = fig.add_subplot(111, projection='3d')
+#cmap = mpl.cm.jet
+#for s in range(2):
+#    for t in range(n_time):
+#        ax.scatter(pred_mean[0, t, s], pred_mean[1, t, s], pred_mean[2, t, s],
+#                   s=t/3+1, color=cmap(s / float(2)))
+#plt.show()
+
+'''Ploting the amplitude of the 1rst and 2nd components of each parameter 
+across time'''
+c1, c2, c3 = 0, 1, 2
+time = np.arange(n_time)
+fig = plt.figure(figsize=(16, 7))
+fig.suptitle('gng time ' + str(gng_time) + ' max delay ' + str(delay_max) +
+             ' parametrization ' + str(lamb) +
+             '\nS1 / S2 data projected onto dPCA decoder axis')
+
+plt.subplots_adjust(hspace = 0.5)
+plt.subplot(331)
+for s in range(2):
+    plt.plot(time, Z['t'][c1, :, s])
+plt.title(str(c1+1)+'st time component')
+
+
+plt.subplot(334)
+for s in range(2):
+    plt.plot(time, Z['t'][c2, :, s])
+plt.title(str(c2+1)+'d time component')
+plt.xlabel('time')
+
+plt.subplot(337)
+for s in range(2):
+    plt.plot(time, Z['t'][c2, :, s])
+plt.title(str(c3+1)+'d time component')
+plt.xlabel('time')
+
+plt.subplot(332)
+for s in range(2):
+    plt.plot(time, Z['s'][c1, :, s])
+plt.title(str(c1+1)+'st stimulus component')
+
+plt.subplot(335)
+for s in range(2):
+    plt.plot(time, Z['s'][c2, :, s])
+plt.title(str(c2+1)+'nd stimulus component')
+plt.xlabel('time')
+
+plt.subplot(338)
+for s in range(2):
+    plt.plot(time, Z['s'][c2, :, s])
+plt.title(str(c3+1)+'nd stimulus component')
+plt.xlabel('time')
+
+plt.subplot(333)
+for s in range(2):
+    plt.plot(time, Z['ts'][c1, :, s])
+plt.title(str(c1+1)+'st mixing component')
+
+plt.subplot(336)
+for s in range(2):
+    plt.plot(time, Z['ts'][c2, :, s])
+plt.title(str(c2+1)+'nd mixing component')
+plt.xlabel('time')
+plt.show()
+
+plt.subplot(339)
+for s in range(2):
+    plt.plot(time, Z['ts'][c2, :, s])
+plt.title(str(c3+1)+'nd mixing component')
+plt.xlabel('time')
+plt.show()
+
+fig_dir = os.path.join('/home/joan/Desktop/dPCAfig/', str(gng_time) + '_' +
+                       str(delay_max) + '_' + str(lamb) + '/')
+try:
+    os.mkdir(fig_dir)
+except OSError:
+    plt.savefig(os.path.join(fig_dir, 'S1S2time.png'))
+else:
+    plt.savefig(os.path.join(fig_dir, 'S1S2time.png'))
+
+'''Ploting the 2 firsts demixed components for time, stimulus, and mixing'''
 
 
 
+fig = plt.figure(figsize=(15, FIG_HEIGHT), tight_layout=True)
+fig.suptitle('gng time ' + str(gng_time) + ' max delay ' + str(delay_max) +
+             ' parametrization ' + str(lamb) +
+             '\nS1 / S2 dPCA components')
+
+plt.subplot(131)
+for s in range(2):
+    plt.scatter(Z['t'][c1, :, s], Z['t'][c2, :, s], s=2*time+1)
+#plot(E['t'], c='k', lw=5)
+plt.xlabel(str(c1+1)+'st time component')
+plt.ylabel(str(c2+1)+'nd time component')
+
+plt.subplot(132)
+for s in range(2):
+    plt.scatter(Z['s'][c1, :, s], Z['s'][c2, :, s], s=2*time+1)
+#plot(E['s'], c='k', lw=5)
+plt.xlabel(str(c1+1)+'st stimulus component')
+plt.ylabel(str(c2+1)+'nd stimulus component')
+
+plt.subplot(133)
+for s in range(2):
+    plt.scatter(Z['ts'][c1, :, s], Z['ts'][c2, :, s], s=2*time+1)
+#plot(E['s'], c='k', lw=5)
+plt.xlabel(str(c1+1)+'st mixing component')
+plt.ylabel(str(c2+1)+'nd mixing component')
+plt.show()
+
+plt.savefig(os.path.join(fig_dir, 'S1S2comp.png'))
+
+
+
+'''S3 and S4 as a condition'''
+# number of elements for S1 and for S2
+n0 = np.shape(np.where(example_trials['stim_conf'][:, 1] == 0)[0])[0]
+n1 = np.shape(np.where(example_trials['stim_conf'][:, 1] == 1)[0])[0]
+
+# Arrays of the elements corresponding to S1 and S2 of different sizes
+predictions0 = np.zeros([n0, n_states, n_time])
+predictions1 = np.zeros([n1, n_states, n_time])
+
+
+for ind_state in range(n_states):
+    predictions0[:, ind_state, :] = example_predictions['state'][
+            example_trials['stim_conf'][:, 1] == 0, :, ind_state]
+
+    predictions1[:, ind_state, :] = example_predictions['state'][
+            example_trials['stim_conf'][:, 1] == 1, :, ind_state]
+
+predictions = np.stack((predictions0, predictions1), axis=3)
+
+# trial-average data
+pred_mean = np.mean(predictions, 0)
+
+# center data
+pred_mean -= np.mean(pred_mean.reshape((n_states, -1)), 1)[:, None, None]
+
+'''dPCA transform'''
+
+dpca = dPCA(labels='ts', regularizer='auto')
+dpca.protect = ['s']
+
+Z = dpca.fit_transform(pred_mean, predictions)
+
+
+'''Ploting the activations of 3 neurons for each stimulus'''
+FIG_WIDTH = 6  # inches
+FIG_HEIGHT = 6  # inches
+FONT_WEIGHT = 'bold'
+        
+        
+#fig = plt.figure(figsize=(FIG_WIDTH, FIG_HEIGHT), tight_layout=True)
 #
-#'''Fixed point finder hyperparameters. See FixedPointFinder.py for detailed
-#descriptions of available hyperparameters.'''
-#fpf_hps = {}
+#ax = fig.add_subplot(111, projection='3d')
+#cmap = mpl.cm.jet
+#for s in range(2):
+#    for t in range(n_time):
+#        ax.scatter(pred_mean[0, t, s], pred_mean[1, t, s], pred_mean[2, t, s],
+#                   s=t/3+1, color=cmap(s / float(2)))
+#plt.show()
+
+'''Ploting the amplitude of the 1rst and 2nd components of each parameter 
+across time'''
+c1, c2, c3 = 0, 1, 2
+time = np.arange(n_time)
+fig = plt.figure(figsize=(16, 7))
+fig.suptitle('gng time ' + str(gng_time) + ' max delay ' + str(delay_max) +
+             ' parametrization ' + str(lamb) +
+             '\nS3 / S4 data projected onto dPCA decoder axis')
+
+plt.subplots_adjust(hspace = 0.5)
+plt.subplot(331)
+for s in range(2):
+    plt.plot(time, Z['t'][c1, :, s])
+plt.title(str(c1+1)+'st time component')
+
+
+plt.subplot(334)
+for s in range(2):
+    plt.plot(time, Z['t'][c2, :, s])
+plt.title(str(c2+1)+'d time component')
+plt.xlabel('time')
+
+plt.subplot(337)
+for s in range(2):
+    plt.plot(time, Z['t'][c2, :, s])
+plt.title(str(c3+1)+'d time component')
+plt.xlabel('time')
+
+plt.subplot(332)
+for s in range(2):
+    plt.plot(time, Z['s'][c1, :, s])
+plt.title(str(c1+1)+'st stimulus component')
+
+plt.subplot(335)
+for s in range(2):
+    plt.plot(time, Z['s'][c2, :, s])
+plt.title(str(c2+1)+'nd stimulus component')
+plt.xlabel('time')
+
+plt.subplot(338)
+for s in range(2):
+    plt.plot(time, Z['s'][c2, :, s])
+plt.title(str(c3+1)+'nd stimulus component')
+plt.xlabel('time')
+
+plt.subplot(333)
+for s in range(2):
+    plt.plot(time, Z['ts'][c1, :, s])
+plt.title(str(c1+1)+'st mixing component')
+
+plt.subplot(336)
+for s in range(2):
+    plt.plot(time, Z['ts'][c2, :, s])
+plt.title(str(c2+1)+'nd mixing component')
+plt.xlabel('time')
+plt.show()
+
+plt.subplot(339)
+for s in range(2):
+    plt.plot(time, Z['ts'][c2, :, s])
+plt.title(str(c3+1)+'nd mixing component')
+plt.xlabel('time')
+plt.show()
+
+plt.savefig(os.path.join(fig_dir, 'S3S4time.png'))
+
+'''Ploting the 2 firsts demixed components for time, stimulus, and mixing'''
+
+
+fig = plt.figure(figsize=(15, FIG_HEIGHT), tight_layout=True)
+fig.suptitle('gng time ' + str(gng_time) + ' max delay ' + str(delay_max) +
+             ' parametrization ' + str(lamb) +
+             '\nS3 / S4 dPCA components')
+
+plt.subplot(131)
+for s in range(2):
+    plt.scatter(Z['t'][c1, :, s], Z['t'][c2, :, s], s=2*time+1)
+#plot(E['t'], c='k', lw=5)
+plt.xlabel(str(c1+1)+'st time component')
+plt.ylabel(str(c2+1)+'nd time component')
+
+plt.subplot(132)
+for s in range(2):
+    plt.scatter(Z['s'][c1, :, s], Z['s'][c2, :, s], s=2*time+1)
+#plot(E['s'], c='k', lw=5)
+plt.xlabel(str(c1+1)+'st stimulus component')
+plt.ylabel(str(c2+1)+'nd stimulus component')
+
+plt.subplot(133)
+for s in range(2):
+    plt.scatter(Z['ts'][c1, :, s], Z['ts'][c2, :, s], s=2*time+1)
+#plot(E['s'], c='k', lw=5)
+plt.xlabel(str(c1+1)+'st mixing component')
+plt.ylabel(str(c2+1)+'nd mixing component')
+plt.show()
+
+
+#significance_masks = dpca.significance_analysis(pred_mean, predictions,
+#                                                axis='t', n_shuffles=10,
+#                                                n_splits=10, n_consecutive=10)
 #
-## Setup the fixed point finder
-#fpf = FixedPointFinder(dt.rnn_cell,
-#                       dt.session,
-#                       **fpf_hps)
+#for s in range(2):
+#    plt.scatter(Z['s'][0, s], Z['s'][1, s])
+##plt.xlabel('1st stimulus component')
+##plt.ylabel('2nd stimulus component')
+#plt.show()
+plt.savefig(os.path.join(fig_dir, 'S3S4comp.png'))
+
+'''S5 and S6 as a condition'''
+# number of elements for S1 and for S2
+n0 = np.shape(np.where(example_trials['stim_conf'][:, 2] == 0)[0])[0]
+n1 = np.shape(np.where(example_trials['stim_conf'][:, 2] == 1)[0])[0]
+
+# Arrays of the elements corresponding to S1 and S2 of different sizes
+predictions0 = np.zeros([n0, n_states, n_time])
+predictions1 = np.zeros([n1, n_states, n_time])
+
+
+for ind_state in range(n_states):
+    predictions0[:, ind_state, :] = example_predictions['state'][
+            example_trials['stim_conf'][:, 2] == 0, :, ind_state]
+
+    predictions1[:, ind_state, :] = example_predictions['state'][
+            example_trials['stim_conf'][:, 2] == 1, :, ind_state]
+
+predictions = np.stack((predictions0, predictions1), axis=3)
+
+# trial-average data
+pred_mean = np.mean(predictions, 0)
+
+# center data
+pred_mean -= np.mean(pred_mean.reshape((n_states, -1)), 1)[:, None, None]
+
+'''dPCA transform'''
+
+dpca = dPCA(labels='ts', regularizer='auto')
+dpca.protect = ['s']
+
+Z = dpca.fit_transform(pred_mean, predictions)
+
+
+'''Ploting the activations of 3 neurons for each stimulus'''
+FIG_WIDTH = 6  # inches
+FIG_HEIGHT = 6  # inches
+FONT_WEIGHT = 'bold'
+        
+        
+#fig = plt.figure(figsize=(FIG_WIDTH, FIG_HEIGHT), tight_layout=True)
 #
-## Study the system in the absence of input pulses (e.g., all inputs are 0)
-#inputs = np.zeros([1, n_bits])
+#ax = fig.add_subplot(111, projection='3d')
+#cmap = mpl.cm.jet
+#for s in range(2):
+#    for t in range(n_time):
+#        ax.scatter(pred_mean[0, t, s], pred_mean[1, t, s], pred_mean[2, t, s],
+#                   s=t/3+1, color=cmap(s / float(2)))
+#plt.show()
+
+'''Ploting the amplitude of the 1rst and 2nd components of each parameter 
+across time'''
+c1, c2, c3 = 0, 1, 2
+time = np.arange(n_time)
+fig = plt.figure(figsize=(16, 7))
+fig.suptitle('gng time ' + str(gng_time) + ' max delay ' + str(delay_max) +
+             ' parametrization ' + str(lamb) +
+             '\nS5 / S6 data projected onto dPCA decoder axis')
+
+plt.subplots_adjust(hspace = 0.5)
+plt.subplot(331)
+for s in range(2):
+    plt.plot(time, Z['t'][c1, :, s])
+plt.title(str(c1+1)+'st time component')
+
+
+plt.subplot(334)
+for s in range(2):
+    plt.plot(time, Z['t'][c2, :, s])
+plt.title(str(c2+1)+'d time component')
+plt.xlabel('time')
+
+plt.subplot(337)
+for s in range(2):
+    plt.plot(time, Z['t'][c2, :, s])
+plt.title(str(c3+1)+'d time component')
+plt.xlabel('time')
+
+plt.subplot(332)
+for s in range(2):
+    plt.plot(time, Z['s'][c1, :, s])
+plt.title(str(c1+1)+'st stimulus component')
+
+plt.subplot(335)
+for s in range(2):
+    plt.plot(time, Z['s'][c2, :, s])
+plt.title(str(c2+1)+'nd stimulus component')
+plt.xlabel('time')
+
+plt.subplot(338)
+for s in range(2):
+    plt.plot(time, Z['s'][c2, :, s])
+plt.title(str(c3+1)+'nd stimulus component')
+plt.xlabel('time')
+
+plt.subplot(333)
+for s in range(2):
+    plt.plot(time, Z['ts'][c1, :, s])
+plt.title(str(c1+1)+'st mixing component')
+
+plt.subplot(336)
+for s in range(2):
+    plt.plot(time, Z['ts'][c2, :, s])
+plt.title(str(c2+1)+'nd mixing component')
+plt.xlabel('time')
+plt.show()
+
+plt.subplot(339)
+for s in range(2):
+    plt.plot(time, Z['ts'][c2, :, s])
+plt.title(str(c3+1)+'nd mixing component')
+plt.xlabel('time')
+plt.show()
+
+plt.savefig(os.path.join(fig_dir, 'S5S6time.png'))
+
+'''Ploting the 2 firsts demixed components for time, stimulus, and mixing'''
+
+
+fig = plt.figure(figsize=(15, FIG_HEIGHT), tight_layout=True)
+fig.suptitle('gng time ' + str(gng_time) + ' max delay ' + str(delay_max) +
+             ' parametrization ' + str(lamb) +
+             '\nS5 / S6 dPCA components')
+
+plt.subplot(131)
+for s in range(2):
+    plt.scatter(Z['t'][c1, :, s], Z['t'][c2, :, s], s=2*time+1)
+#plot(E['t'], c='k', lw=5)
+plt.xlabel(str(c1+1)+'st time component')
+plt.ylabel(str(c2+1)+'nd time component')
+
+plt.subplot(132)
+for s in range(2):
+    plt.scatter(Z['s'][c1, :, s], Z['s'][c2, :, s], s=2*time+1)
+#plot(E['s'], c='k', lw=5)
+plt.xlabel(str(c1+1)+'st stimulus component')
+plt.ylabel(str(c2+1)+'nd stimulus component')
+
+plt.subplot(133)
+for s in range(2):
+    plt.scatter(Z['ts'][c1, :, s], Z['ts'][c2, :, s], s=2*time+1)
+#plot(E['s'], c='k', lw=5)
+plt.xlabel(str(c1+1)+'st mixing component')
+plt.ylabel(str(c2+1)+'nd mixing component')
+plt.show()
+
+
+#significance_masks = dpca.significance_analysis(pred_mean, predictions,
+#                                                axis='t', n_shuffles=10,
+#                                                n_splits=10, n_consecutive=10)
 #
-#'''Draw random, noise corrupted samples of those state trajectories
-#to use as initial states for the fixed point optimizations.'''
-#example_predictions = dt.predict(example_trials,
-#                                 do_predict_full_LSTM_state=is_lstm)
-#initial_states = fpf.sample_states(example_predictions['state'],
-#                                   n_inits=N_INITS,
-#                                   rng=dt.rng,
-#                                   noise_scale=NOISE_SCALE)
-## plot population activity
-#f = plt.figure()
-#num_plots = 5
-#for ind_pl in range(num_plots):
-#    plt.subplot(num_plots, 1, ind_pl+1)
-#    aux = np.squeeze(example_predictions['state'][ind_pl, :, :].T)
-#    maximo = np.max(np.abs(aux), axis=1).reshape((dt.hps.n_hidden, 1))
-##    print(aux)
-#    aux = aux/maximo
-##    print(maximo)
-#    plt.imshow(aux, aspect='auto')
-#    if ind_pl == num_plots-1:
-#        plt.xlabel('time (a.u.)')
-#        plt.ylabel('neurons')
+#for s in range(2):
+#    plt.scatter(Z['s'][0, s], Z['s'][1, s])
+##plt.xlabel('1st stimulus component')
+##plt.ylabel('2nd stimulus component')
+#plt.show()
+plt.savefig(os.path.join(fig_dir, 'S5S6comp.png'))
+
+#'''Go and No Go as a condition'''
+## number of elements for S1 and for S2
+#n0 = np.shape(np.where(example_trials['stim_conf'][:, 3] == 0)[0])[0]
+#n1 = np.shape(np.where(example_trials['stim_conf'][:, 3] == 1)[0])[0]
 #
-#f = plt.figure()
-#num_plots = 5
-#for ind_pl in range(num_plots):
-#    plt.subplot(num_plots, 1, ind_pl+1)
-#    aux = np.squeeze(example_predictions['state'][ind_pl, :, :].T)
-#    maximo = np.max(np.abs(aux), axis=1).reshape((dt.hps.n_hidden, 1))
-#    plt.plot(aux.T)
-#    if ind_pl == num_plots-1:
-#        plt.xlabel('time (a.u.)')
-#        plt.ylabel('neurons')
+## Arrays of the elements corresponding to S1 and S2 of different sizes
+#predictions0 = np.zeros([n0, n_states, n_time])
+#predictions1 = np.zeros([n1, n_states, n_time])
 #
-## Run the fixed point finder
-#unique_fps, _ = fpf.find_fixed_points(initial_states, inputs)
 #
-## Visualize identified fixed points with overlaid RNN state trajectories
-## All visualized in the 3D PCA space fit the the example RNN states.
-## example_trials['stim_conf'] specifies the color of the trace
-## so I just lower the intensity of the colors that are too bright
-## suma = np.sum(example_trials['stim_conf'], axis=1).\
-##    reshape((example_trials['stim_conf'].shape[0], 1)) + 0.000001
-## example_trials['stim_conf'] =\
-##     example_trials['stim_conf']/suma
-### colors based on S1/S2
-##colors = np.zeros_like(example_trials['stim_conf'])
-##colors[:, 0] = example_trials['stim_conf'][:, 0]
-##f = unique_fps.plot(example_predictions['state'],
-##                    stim_config=colors,
-##                    plot_batch_idx=range(128),
-##                    gng_time=dt.hps.data_hps['gng_time'],
-##                    dpa2_time=example_trials['vec_tau'], title='S1/S2')
-### colors based on S3/s4
-##colors = np.zeros_like(example_trials['stim_conf'])
-##colors[:, 0] = example_trials['stim_conf'][:, 1]
-##f = unique_fps.plot(example_predictions['state'],
-##                    stim_config=colors,
-##                    plot_batch_idx=range(128),
-##                    gng_time=dt.hps.data_hps['gng_time'],
-##                    dpa2_time=example_trials['vec_tau'], title='S3/S4')
-### colors based on S5/s6
-##colors = np.zeros_like(example_trials['stim_conf'])
-##colors[:, 0] = example_trials['stim_conf'][:, 2]
-##f = unique_fps.plot(example_predictions['state'],
-##                    stim_config=colors,
-##                    plot_batch_idx=range(128),
-##                    gng_time=dt.hps.data_hps['gng_time'],
-##                    dpa2_time=example_trials['vec_tau'], title='S5/S6')
+#for ind_state in range(n_states):
+#    predictions0[:, ind_state, :] = example_predictions['state'][
+#            example_trials['stim_conf'][:, 3] == 0, :, ind_state]
+#
+#    predictions1[:, ind_state, :] = example_predictions['state'][
+#            example_trials['stim_conf'][:, 3] == 1, :, ind_state]
+#
+#if n1 < n0:
+#    predictions0 = np.delete(predictions0, predictions0[n1:n0-1], axis=0)
+#else:
+#    predictions1 = np.delete(predictions1, predictions1[n0:n1-1], axis=0)
+#
+#predictions = np.stack((predictions0, predictions1), axis=3)
+#
+## trial-average data
+#pred_mean = np.mean(predictions, 0)
+#
+## center data
+#pred_mean -= np.mean(pred_mean.reshape((n_states, -1)), 1)[:, None, None]
+#
+#'''dPCA transform'''
+#
+#dpca = dPCA(labels='ts', regularizer='auto')
+#dpca.protect = ['s']
+#
+#Z = dpca.fit_transform(pred_mean, predictions)
+#
+#
+#'''Ploting the activations of 3 neurons for each stimulus'''
+#FIG_WIDTH = 6  # inches
+#FIG_HEIGHT = 6  # inches
+#FONT_WEIGHT = 'bold'
+#        
+#        
+##fig = plt.figure(figsize=(FIG_WIDTH, FIG_HEIGHT), tight_layout=True)
 ##
-## colors based on final GO/NOGO
-#colors = np.zeros_like(example_trials['stim_conf'])
-#colors[:, 0] = example_trials['output'][:, -1, 0]
-#idx = np.where(((example_trials['vec_tau']==18) + 
-#                (example_trials['vec_tau']==4)) *
-#    (example_trials['stim_conf'][:, 0]==0))[0]
-#f = unique_fps.plot(example_predictions['state'],
-#                    stim_config=colors,
-#                    plot_batch_idx=idx,
-#                    gng_time=dt.hps.data_hps['gng_time'],
-#                    dpa2_time=example_trials['vec_tau'], block=True,
-#                    title='GO/NO-GO')
+##ax = fig.add_subplot(111, projection='3d')
+##cmap = mpl.cm.jet
+##for s in range(2):
+##    for t in range(n_time):
+##        ax.scatter(pred_mean[0, t, s], pred_mean[1, t, s], pred_mean[2, t, s],
+##                   s=t/3+1, color=cmap(s / float(2)))
+##plt.show()
+#
+#'''Ploting the amplitude of the 1rst and 2nd components of each parameter 
+#across time'''
+#c1, c2, c3 = 0, 1, 2
+#time = np.arange(n_time)
+#fig = plt.figure(figsize=(16, 7))
+#fig.suptitle('gng time ' + str(gng_time) + ' max delay ' + str(delay_max) +
+#             ' parametrization ' + str(lamb) +
+#             '\nGo / NoGo data projected onto dPCA decoder axis')
+#
+#plt.subplots_adjust(hspace = 0.5)
+#plt.subplot(331)
+#for s in range(2):
+#    plt.plot(time, Z['t'][c1, :, s])
+#plt.title(str(c1+1)+'st time component')
 #
 #
-## print('Entering debug mode to allow interaction with objects and figures.')
-## pdb.set_trace()
+#plt.subplot(334)
+#for s in range(2):
+#    plt.plot(time, Z['t'][c2, :, s])
+#plt.title(str(c2+1)+'d time component')
+#plt.xlabel('time')
+#
+#plt.subplot(337)
+#for s in range(2):
+#    plt.plot(time, Z['t'][c2, :, s])
+#plt.title(str(c3+1)+'d time component')
+#plt.xlabel('time')
+#
+#plt.subplot(332)
+#for s in range(2):
+#    plt.plot(time, Z['s'][c1, :, s])
+#plt.title(str(c1+1)+'st stimulus component')
+#
+#plt.subplot(335)
+#for s in range(2):
+#    plt.plot(time, Z['s'][c2, :, s])
+#plt.title(str(c2+1)+'nd stimulus component')
+#plt.xlabel('time')
+#
+#plt.subplot(338)
+#for s in range(2):
+#    plt.plot(time, Z['s'][c2, :, s])
+#plt.title(str(c3+1)+'nd stimulus component')
+#plt.xlabel('time')
+#
+#plt.subplot(333)
+#for s in range(2):
+#    plt.plot(time, Z['ts'][c1, :, s])
+#plt.title(str(c1+1)+'st mixing component')
+#
+#plt.subplot(336)
+#for s in range(2):
+#    plt.plot(time, Z['ts'][c2, :, s])
+#plt.title(str(c2+1)+'nd mixing component')
+#plt.xlabel('time')
+#plt.show()
+#
+#plt.subplot(339)
+#for s in range(2):
+#    plt.plot(time, Z['ts'][c2, :, s])
+#plt.title(str(c3+1)+'nd mixing component')
+#plt.xlabel('time')
+#plt.show()
+#
+#plt.savefig(os.path.join(fig_dir, 'GoNogotime.png'))
+#
+#'''Ploting the 2 firsts demixed components for time, stimulus, and mixing'''
+#
+#
+#fig = plt.figure(figsize=(15, FIG_HEIGHT), tight_layout=True)
+#fig.suptitle('gng time ' + str(gng_time) + ' max delay ' + str(delay_max) +
+#             ' parametrization ' + str(lamb) +
+#             '\nGo / NoGo dPCA components')
+#
+#plt.subplot(131)
+#for s in range(2):
+#    plt.scatter(Z['t'][c1, :, s], Z['t'][c2, :, s], s=2*time+1)
+##plot(E['t'], c='k', lw=5)
+#plt.xlabel(str(c1+1)+'st time component')
+#plt.ylabel(str(c2+1)+'nd time component')
+#
+#plt.subplot(132)
+#for s in range(2):
+#    plt.scatter(Z['s'][c1, :, s], Z['s'][c2, :, s], s=2*time+1)
+##plot(E['s'], c='k', lw=5)
+#plt.xlabel(str(c1+1)+'st stimulus component')
+#plt.ylabel(str(c2+1)+'nd stimulus component')
+#
+#plt.subplot(133)
+#for s in range(2):
+#    plt.scatter(Z['ts'][c1, :, s], Z['ts'][c2, :, s], s=2*time+1)
+##plot(E['s'], c='k', lw=5)
+#plt.xlabel(str(c1+1)+'st mixing component')
+#plt.ylabel(str(c2+1)+'nd mixing component')
+#plt.show()
+#
+#plt.savefig(os.path.join(fig_dir, 'GoNogocomp.png'))
+#
+##significance_masks = dpca.significance_analysis(pred_mean, predictions,
+##                                                axis='t', n_shuffles=10,
+##                                                n_splits=10, n_consecutive=10)
+##
+##for s in range(2):
+##    plt.scatter(Z['s'][0, s], Z['s'][1, s])
+###plt.xlabel('1st stimulus component')
+###plt.ylabel('2nd stimulus component')
+##plt.show()

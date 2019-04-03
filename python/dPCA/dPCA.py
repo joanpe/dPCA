@@ -22,7 +22,7 @@ import numexpr as ne
 
 import pyximport
 pyximport.install(setup_args={'include_dirs': np.get_include()})
-from . import nan_shuffle
+import nan_shuffle
 
 class dPCA(BaseEstimator):
     """ demixed Principal component analysis (dPCA)

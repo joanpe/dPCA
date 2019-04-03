@@ -20,6 +20,7 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
     stim2_seq, choice2 = get_stims(dpa_stim2, n_batch)
     # ground truth dpa
     gt_dpa = choice1 == choice2
+    gt_dpa = gt_dpa*1
 
     # build go-noGo task if required
     if gng_time != 0:
@@ -63,7 +64,8 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
     # stim configuration
     stim_conf = np.concatenate((choice1.reshape(n_batch, 1),
                                 choice2.reshape(n_batch, 1),
-                                gt_gng.reshape(n_batch, 1)), axis=1)
+                                gt_gng.reshape(n_batch, 1),
+                                gt_dpa.reshape(n_batch, 1)), axis=1)
 
     return {'inputs': inputs, 'output': outputs, 'stim_conf': stim_conf,
             'vec_tau': vec_tau}

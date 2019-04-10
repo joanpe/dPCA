@@ -131,6 +131,7 @@ class DualTask(RecurrentWhisperer):
 
         See docstring in RecurrentWhisperer.
         '''
+        tf.reset_default_graph()
         hps = self.hps
         n_hidden = hps.n_hidden
 
@@ -139,6 +140,7 @@ class DualTask(RecurrentWhisperer):
         n_time = data_hps['n_time']
         n_inputs = data_hps['n_bits']
         n_output = n_inputs
+        gng_time = data_hps['gng_time']
 
         # Data handling
         self.inputs_bxtxd = tf.placeholder(tf.float32,
@@ -173,10 +175,16 @@ class DualTask(RecurrentWhisperer):
         # self.loss =\
         # tf.nn.sigmoid_cross_entropy_with_logits(labels=self.output_bxtxd,
         # logits=self.pred_output_bxtxd)
-
-        self.loss = tf.reduce_mean(
-                tf.squared_difference(self.output_bxtxd,
-                                      self.pred_output_bxtxd))
+        if gng_time == 0:
+            self.loss = tf.reduce_mean(
+                tf.squared_difference(self.output_bxtxd[:, n_time-1, :],
+                                      self.pred_output_bxtxd[:, n_time-1, :]))
+        else:
+            self.loss = tf.reduce_mean(
+                    tf.squared_difference(self.output_bxtxd[:, np.logical_or(
+                            gng_time, n_time-1), :],
+                            self.pred_output_bxtxd[:, np.logical_or(
+                                    gng_time, n_time-1), :]))
 
     def _setup_saver(self):
         '''See docstring in RecurrentWhisperer.'''
@@ -379,9 +387,11 @@ class DualTask(RecurrentWhisperer):
         gng_time = data_hps['gng_time']
         lamb = data_hps['lamb']
         delay_max = data_hps['delay_max']
+        noise = data_hps['noise']
 
         dataset = data.get_inputs_outputs(n_batch, n_time,
-                                          n_bits, gng_time, lamb, delay_max)
+                                          n_bits, gng_time, lamb, delay_max,
+                                          noise)
         return dataset
 
     def _setup_visualizations(self):
@@ -436,7 +446,8 @@ class DualTask(RecurrentWhisperer):
             if n_plot == 1:
                 plt.title('Example trial', fontweight='bold')
             else:
-                plt.title('Example trial %d | %d' % (trial_idx + 1, dpa2_time[trial_idx]),
+                plt.title('Example trial %d | %d' % (trial_idx + 1,
+                                                     dpa2_time[trial_idx]),
                           fontweight='bold')
 
             self._plot_single_trial(
@@ -486,12 +497,12 @@ class DualTask(RecurrentWhisperer):
                 color='cyan')
 
             # RNN outputs
-            plt.step(
-                tt,
-                vertical_offset + pred_output_txd[:, bit_idx],
-                where='mid',
-                color='purple',
-                linewidth=1.5,
-                linestyle='--')
+#            plt.step(
+#                tt,
+#                vertical_offset + pred_output_txd[:, bit_idx],
+#                where='mid',
+#                color='purple',
+#                linewidth=1.5,
+#                linestyle='--')
 
         plt.xlim(-1, n_time)

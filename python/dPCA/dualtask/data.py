@@ -10,7 +10,7 @@ import matplotlib.pylab as plt
 
 
 def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
-                       delay_max=0, mat_conv=[0, 1]):
+                       delay_max=0, noise=0, mat_conv=[0, 1]):
     # inputs mat
     inputs = np.zeros([n_batch, n_time, n_bits])
     # build dpa structure
@@ -61,6 +61,8 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
         # distractor time = gng_time
         outputs[gt_gng == 1, gng_time, 0] = 1
 
+    # Adding noise to the inputs
+    inputs += np.random.normal(noise, size=inputs.shape)
     # stim configuration
     stim_conf = np.concatenate((choice1.reshape(n_batch, 1),
                                 choice2.reshape(n_batch, 1),

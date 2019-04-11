@@ -76,16 +76,19 @@ for inst in range(5):
         summary = dt._train_batch(example_trials)
         loss = summary['loss']
 
-        data = {'inst': inst, 'noise': noise, 'loss': loss}
         data_mat[inst, np.where(noise_rng == noise)[0]] = loss
+
+        data = {'inst': inst, 'noise': noise, 'loss': loss}
 
         fig_dir = os.path.join(PATH, 'data')
         try:
             os.mkdir(fig_dir)
         except OSError:
-            np.savez(os.path.join(fig_dir, 'noise_'+str(noise)), **data)
+            np.savez(os.path.join(fig_dir, 'noise_' + str(noise) +
+                                  '_inst_' + str(inst)), **data)
         else:
-            np.savez(os.path.join(fig_dir, 'noise_'+str(noise)), **data)
+            np.savez(os.path.join(fig_dir, 'noise_' + str(noise) +
+                                  '_inst_' + str(inst)), **data)
 
 # f.canvas.draw()
 # *****************************************************************************

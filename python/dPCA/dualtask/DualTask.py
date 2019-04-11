@@ -180,11 +180,11 @@ class DualTask(RecurrentWhisperer):
                 tf.squared_difference(self.output_bxtxd[:, n_time-1, :],
                                       self.pred_output_bxtxd[:, n_time-1, :]))
         else:
-            self.loss = tf.reduce_mean(
-                    tf.squared_difference(self.output_bxtxd[:, np.logical_or(
-                            gng_time, n_time-1), :],
-                            self.pred_output_bxtxd[:, np.logical_or(
-                                    gng_time, n_time-1), :]))
+            w = np.where((np.arange(n_time) == gng_time) +
+                         (np.arange(n_time) == n_time-1))[0]
+            self.loss = tf.reduce_mean(tf.squared_difference(
+                    self.output_bxtxd[:, w.astype(np.int32), :],
+                    self.pred_output_bxtxd[:, w.astype(np.int32), :]))
 
     def _setup_saver(self):
         '''See docstring in RecurrentWhisperer.'''

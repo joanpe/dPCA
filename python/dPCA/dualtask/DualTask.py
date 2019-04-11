@@ -175,16 +175,20 @@ class DualTask(RecurrentWhisperer):
         # self.loss =\
         # tf.nn.sigmoid_cross_entropy_with_logits(labels=self.output_bxtxd,
         # logits=self.pred_output_bxtxd)
-        if gng_time == 0:
-            self.loss = tf.reduce_mean(
-                tf.squared_difference(self.output_bxtxd[:, n_time-1, :],
-                                      self.pred_output_bxtxd[:, n_time-1, :]))
+
+        self.loss_dpa = tf.reduce_mean(tf.squared_difference(
+                self.output_bxtxd[:, n_time-1, :], self.pred_output_bxtxd[
+                        :, n_time-1, :]))
+
+        if gng_time != 0:
+
+            self.loss_gng = tf.reduce_mean(tf.squared_difference(
+                self.output_bxtxd[:, gng_time, :], self.pred_output_bxtxd[
+                        :, gng_time, :]))
         else:
-            w = np.where((np.arange(n_time) == gng_time) +
-                         (np.arange(n_time) == n_time-1))[0]
-            self.loss = tf.reduce_mean(tf.squared_difference(
-                    self.output_bxtxd[:, w.astype(np.int32), :],
-                    self.pred_output_bxtxd[:, w.astype(np.int32), :]))
+            self.loss_gng = 0
+
+        self.loss = self.loss_dpa + self.loss_gng
 
     def _setup_saver(self):
         '''See docstring in RecurrentWhisperer.'''
@@ -224,6 +228,8 @@ class DualTask(RecurrentWhisperer):
         ops_to_eval = [self.train_op,
                        self.grad_global_norm,
                        self.loss,
+                       self.loss_dpa,
+                       self.loss_gng,
                        self.merged_opt_summary]
 
         feed_dict = dict()
@@ -234,7 +240,7 @@ class DualTask(RecurrentWhisperer):
 
         [ev_train_op,
          ev_grad_global_norm,
-         ev_loss,
+         ev_loss, ev_loss_dpa, ev_loss_gng,
          ev_merged_opt_summary] = self.session.run(ops_to_eval,
                                                    feed_dict=feed_dict)
 
@@ -251,7 +257,8 @@ class DualTask(RecurrentWhisperer):
 
             self.writer.add_summary(ev_merged_opt_summary, self._step())
 
-        summary = {'loss': ev_loss, 'grad_global_norm': ev_grad_global_norm}
+        summary = {'loss': ev_loss, 'grad_global_norm': ev_grad_global_norm,
+                   'loss_dpa': ev_loss_dpa, 'loss_gng': ev_loss_gng}
 
         return summary
 
@@ -497,12 +504,12 @@ class DualTask(RecurrentWhisperer):
                 color='cyan')
 
             # RNN outputs
-#            plt.step(
-#                tt,
-#                vertical_offset + pred_output_txd[:, bit_idx],
-#                where='mid',
-#                color='purple',
-#                linewidth=1.5,
-#                linestyle='--')
+            plt.step(
+                tt,
+                vertical_offset + pred_output_txd[:, bit_idx],
+                where='mid',
+                color='purple',
+                linewidth=1.5,
+                linestyle='--')
 
         plt.xlim(-1, n_time)

@@ -62,7 +62,7 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
         outputs[gt_gng == 1, gng_time, 0] = 1
 
     # Adding noise to the inputs
-    inputs += np.random.normal(noise, size=inputs.shape)
+    inputs += np.random.normal(scale=noise, size=inputs.shape)
     # stim configuration
     stim_conf = np.concatenate((choice1.reshape(n_batch, 1),
                                 choice2.reshape(n_batch, 1),

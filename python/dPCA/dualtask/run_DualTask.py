@@ -24,8 +24,9 @@ from dPCA import dPCA
 # *****************************************************************************
 # STEP 1: Train an RNN to solve the dual task *********************************
 # *****************************************************************************
-noise_rng = np.array([0.05, 0.1, 0.15])
-data_mat = np.zeros((5, noise_rng.shape[0]))
+noise_rng = np.array([0, 0.01, 0.05, 0.1, 0.15])
+#noise_rng = np.array([0.01])
+datalist = []
 for inst in range(5):
     for noise in noise_rng:
         # Hyperparameters for AdaptiveLearningRate
@@ -38,7 +39,7 @@ for inst in range(5):
             'n_hidden': 256,
             'min_loss': 1e-6,  # 1e-4
             'min_learning_rate': 1e-5,
-            'max_n_epochs': 10000,
+            'max_n_epochs': 1000,
             'do_restart_run': True,
             'log_dir': './logs/',
             'data_hps': {
@@ -46,7 +47,7 @@ for inst in range(5):
                 'n_time': 20,
                 'n_bits': 6,
                 'noise': noise,
-                'gng_time': 10,
+                'gng_time': 0,
                 'lamb': 0,
                 'delay_max': 0},
             'alr_hps': alr_hps
@@ -75,20 +76,30 @@ for inst in range(5):
 
         summary = dt._train_batch(example_trials)
         loss = summary['loss']
+        loss_dpa = summary['loss_dpa']
+        loss_gng = summary['loss_gng']
 
-        data_mat[inst, np.where(noise_rng == noise)[0]] = loss
+        datalist.append([inst, noise, loss, loss_dpa, loss_gng])
 
-        data = {'inst': inst, 'noise': noise, 'loss': loss}
+        plt.figure()
+        plt.plot(noise, loss_dpa, '+')
+        plt.plot(noise, loss_gng, 'v')
+        plt.draw()
+        plt.show()
 
-        fig_dir = os.path.join(PATH, 'data')
-        try:
-            os.mkdir(fig_dir)
-        except OSError:
-            np.savez(os.path.join(fig_dir, 'noise_' + str(noise) +
-                                  '_inst_' + str(inst)), **data)
-        else:
-            np.savez(os.path.join(fig_dir, 'noise_' + str(noise) +
-                                  '_inst_' + str(inst)), **data)
+data = {'datalist': datalist}
+
+fig_dir = os.path.join(PATH, 'data')
+try:
+    os.mkdir(fig_dir)
+except OSError:
+    np.savez(os.path.join(fig_dir, 'noise_' + str(noise) +
+                          '_inst_' + str(inst)), **data)
+else:
+    np.savez(os.path.join(fig_dir, 'noise_' + str(noise) +
+                          '_inst_' + str(inst)), **data)
+   
+
 
 # f.canvas.draw()
 # *****************************************************************************

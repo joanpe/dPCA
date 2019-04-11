@@ -186,7 +186,7 @@ class DualTask(RecurrentWhisperer):
                 self.output_bxtxd[:, gng_time, :], self.pred_output_bxtxd[
                         :, gng_time, :]))
         else:
-            self.loss_gng = 0
+            self.loss_gng = tf.constant(0, dtype='float32')
 
         self.loss = self.loss_dpa + self.loss_gng
 
@@ -228,21 +228,21 @@ class DualTask(RecurrentWhisperer):
         ops_to_eval = [self.train_op,
                        self.grad_global_norm,
                        self.loss,
+                       self.merged_opt_summary,
                        self.loss_dpa,
-                       self.loss_gng,
-                       self.merged_opt_summary]
+                       self.loss_gng]
 
         feed_dict = dict()
         feed_dict[self.inputs_bxtxd] = batch_data['inputs']
         feed_dict[self.output_bxtxd] = batch_data['output']
         feed_dict[self.learning_rate] = self.adaptive_learning_rate()
         feed_dict[self.grad_norm_clip_val] = self.adaptive_grad_norm_clip()
-
         [ev_train_op,
          ev_grad_global_norm,
-         ev_loss, ev_loss_dpa, ev_loss_gng,
-         ev_merged_opt_summary] = self.session.run(ops_to_eval,
-                                                   feed_dict=feed_dict)
+         ev_loss,
+         ev_merged_opt_summary,
+         ev_loss_dpa, ev_loss_gng] = self.session.run(ops_to_eval,
+                                                      feed_dict=feed_dict)
 
         if self.hps.do_save_tensorboard_events:
 

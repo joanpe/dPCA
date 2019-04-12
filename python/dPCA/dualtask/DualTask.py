@@ -294,7 +294,9 @@ class DualTask(RecurrentWhisperer):
         else:
             ops_to_eval = [self.hidden_bxtxd, self.pred_output_bxtxd,
                            self.loss, self.loss_dpa, self.loss_gng]
-            feed_dict = {self.inputs_bxtxd: batch_data['inputs']}
+            feed_dict = dict()
+            feed_dict[self.inputs_bxtxd] = batch_data['inputs']
+            feed_dict[self.output_bxtxd] = batch_data['output']
             [ev_hidden_bxtxd,
              ev_pred_output_bxtxd,
              ev_loss,

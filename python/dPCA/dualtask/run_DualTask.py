@@ -24,14 +24,13 @@ from dPCA import dPCA
 # *****************************************************************************
 # STEP 1: Train an RNN to solve the dual task *********************************
 # *****************************************************************************
-noise_rng = np.array([0, 0.01, 0.05, 0.1, 0.15])
-#noise_rng = np.array([0.01])
+noise_rng = np.array([0, 0.3, 0.5, 0.7])
 datalist = []
 for inst in range(5):
     for noise in noise_rng:
         # Hyperparameters for AdaptiveLearningRate
         alr_hps = {'initial_rate': 0.1}
-        
+     
         # Hyperparameters for FlipFlop
         # See FlipFlop.py for detailed descriptions.
         hps = {
@@ -47,7 +46,7 @@ for inst in range(5):
                 'n_time': 20,
                 'n_bits': 6,
                 'noise': noise,
-                'gng_time': 0,
+                'gng_time': 10,
                 'lamb': 0,
                 'delay_max': 0},
             'alr_hps': alr_hps
@@ -84,7 +83,9 @@ for inst in range(5):
         plt.figure()
         plt.plot(noise, loss_dpa, '+')
         plt.plot(noise, loss_gng, 'v')
+        plt.ion()
         plt.draw()
+        plt.pause(0.05)
         plt.show()
 
 data = {'datalist': datalist}
@@ -93,12 +94,29 @@ fig_dir = os.path.join(PATH, 'data')
 try:
     os.mkdir(fig_dir)
 except OSError:
-    np.savez(os.path.join(fig_dir, 'noise_' + str(noise) +
-                          '_inst_' + str(inst)), **data)
+    np.savez(os.path.join(fig_dir, 'data_' + str(gng_time)), **data)
 else:
-    np.savez(os.path.join(fig_dir, 'noise_' + str(noise) +
-                          '_inst_' + str(inst)), **data)
-   
+    np.savez(os.path.join(fig_dir, 'data_' + str(gng_time)), **data)
+
+
+data = np.vstack(data['datalist'][i] for i in range(int(5*noise_rng.shape[0])))
+
+mean_loss = []
+std = []
+for n in noise_rng:
+    mean_loss.append(np.mean(data[data[:, 1] == n, 2]))
+    std.append(np.std(data[data[:, 1] == n, 2]))
+
+mean_loss_gng = []
+std_gng = []
+for n in noise_rng:
+    mean_loss_gng.append(np.mean(data[data[:, 1] == n, 4]))
+    std_gng.append(np.std(data[data[:, 1] == n, 4]))
+
+plt.figure()
+plt.errorbar(noise_rng, mean_loss, yerr=std, '+')
+plt.errorbar(noise_rng, mean_loss_gng, yerr=std_gng, 'v')
+
 
 
 # f.canvas.draw()

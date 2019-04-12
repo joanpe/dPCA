@@ -26,6 +26,7 @@ from dPCA import dPCA
 # *****************************************************************************
 noise_rng = np.array([0, 0.3, 0.5, 0.7])
 datalist = []
+f = plt.figure()
 for inst in range(5):
     for noise in noise_rng:
         # Hyperparameters for AdaptiveLearningRate
@@ -74,13 +75,12 @@ for inst in range(5):
                                          do_predict_full_LSTM_state=is_lstm)
 
         summary = dt._train_batch(example_trials)
-        loss = summary['loss']
-        loss_dpa = summary['loss_dpa']
-        loss_gng = summary['loss_gng']
+        loss = example_predictions['ev_loss']
+        loss_dpa = example_predictions['ev_loss_dpa']
+        loss_gng = example_predictions['ev_loss_gng']
 
         datalist.append([inst, noise, loss, loss_dpa, loss_gng])
-
-        plt.figure()
+        plt.figure(f.number)
         plt.plot(noise, loss_dpa, '+')
         plt.plot(noise, loss_gng, 'v')
         plt.ion()

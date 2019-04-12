@@ -24,7 +24,7 @@ from dPCA import dPCA
 # *****************************************************************************
 # STEP 1: Train an RNN to solve the dual task *********************************
 # *****************************************************************************
-noise_rng = np.array([0, 0.3, 0.5, 0.7])
+noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5])
 datalist = []
 f = plt.figure()
 for inst in range(5):
@@ -47,7 +47,7 @@ for inst in range(5):
                 'n_time': 20,
                 'n_bits': 6,
                 'noise': noise,
-                'gng_time': 10,
+                'gng_time': 0,
                 'lamb': 0,
                 'delay_max': 0},
             'alr_hps': alr_hps
@@ -114,8 +114,8 @@ for n in noise_rng:
     std_gng.append(np.std(data[data[:, 1] == n, 4]))
 
 plt.figure()
-plt.errorbar(noise_rng, mean_loss, yerr=std, '+')
-plt.errorbar(noise_rng, mean_loss_gng, yerr=std_gng, 'v')
+plt.errorbar(noise_rng, mean_loss, yerr=std, m='+')
+plt.errorbar(noise_rng, mean_loss_gng, yerr=std_gng, m='v')
 
 
 

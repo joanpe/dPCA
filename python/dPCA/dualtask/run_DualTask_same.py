@@ -25,8 +25,8 @@ from dPCA import dPCA
 # *****************************************************************************
 # STEP 1: Train an RNN to solve the dual task *********************************
 # *****************************************************************************
-noise_rng = np.array([0.2, 0.3, 0.4, 0.5, 0.6])
-gng_rng = np.array([10])
+noise_rng = np.array([0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6])
+gng_rng = np.array([0, 10])
 
 # Train various RNNs with diferent noise
 for gng in gng_rng:
@@ -34,7 +34,7 @@ for gng in gng_rng:
     datalist = []
     f = plt.figure()
     plt.clf()
-    INST = 4
+    INST = 5
 
     for inst in range(INST):
         for noise in noise_rng:

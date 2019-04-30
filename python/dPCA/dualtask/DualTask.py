@@ -176,19 +176,35 @@ class DualTask(RecurrentWhisperer):
         # tf.nn.sigmoid_cross_entropy_with_logits(labels=self.output_bxtxd,
         # logits=self.pred_output_bxtxd)
 
-        self.loss_dpa = tf.reduce_mean(tf.squared_difference(
-                self.output_bxtxd[:, n_time-1, :], self.pred_output_bxtxd[
-                        :, n_time-1, :]))
+# COMPUTE LOSS ONLY IN PARTICULAR TIME STEPS
+#        self.loss_dpa = tf.reduce_mean(tf.squared_difference(
+#                self.output_bxtxd[:, n_time-1, 0], self.pred_output_bxtxd[
+#                        :, n_time-1, 0]))
+#
+#        if gng_time != 0:
+#
+#            self.loss_gng = tf.reduce_mean(tf.squared_difference(
+#                self.output_bxtxd[:, gng_time, 0], self.pred_output_bxtxd[
+#                        :, gng_time, 0]))
+#        else:
+#            self.loss_gng = tf.constant(0, dtype='float32')
+#
+#        self.loss = self.loss_dpa + self.loss_gng
+        self.loss_gng = tf.constant(0, dtype='float32')
+        self.loss_dpa = tf.constant(0, dtype='float32')
+# COMPUTE LOSS IN ALL TIMESTEPS
+        self.loss = tf.reduce_mean(tf.squared_difference(
+                self.output_bxtxd, self.pred_output_bxtxd))
+# MEASURE OF ACCURACY
+        comparison_dpa = tf.equal(tf.round(
+                self.pred_output_bxtxd[:, n_time-1, 0]),
+                self.output_bxtxd[:, n_time-1, 0])
+        self.acc_dpa = tf.reduce_mean(tf.cast(comparison_dpa, tf.float32))
 
-        if gng_time != 0:
-
-            self.loss_gng = tf.reduce_mean(tf.squared_difference(
-                self.output_bxtxd[:, gng_time, :], self.pred_output_bxtxd[
-                        :, gng_time, :]))
-        else:
-            self.loss_gng = tf.constant(0, dtype='float32')
-
-        self.loss = self.loss_dpa + self.loss_gng
+        comparison_gng = tf.equal(tf.round(
+                self.pred_output_bxtxd[:, gng_time, 0]),
+                self.output_bxtxd[:, gng_time, 0])
+        self.acc_gng = tf.reduce_mean(tf.cast(comparison_gng, tf.float32))
 
     def _setup_saver(self):
         '''See docstring in RecurrentWhisperer.'''
@@ -293,7 +309,8 @@ class DualTask(RecurrentWhisperer):
             return self._predict_with_LSTM_cell_states(batch_data)
         else:
             ops_to_eval = [self.hidden_bxtxd, self.pred_output_bxtxd,
-                           self.loss, self.loss_dpa, self.loss_gng]
+                           self.loss, self.loss_dpa, self.loss_gng,
+                           self.acc_dpa, self.acc_gng ]
             feed_dict = dict()
             feed_dict[self.inputs_bxtxd] = batch_data['inputs']
             feed_dict[self.output_bxtxd] = batch_data['output']
@@ -301,14 +318,18 @@ class DualTask(RecurrentWhisperer):
              ev_pred_output_bxtxd,
              ev_loss,
              ev_loss_dpa,
-             ev_loss_gng] = self.session.run(ops_to_eval, feed_dict=feed_dict)
+             ev_loss_gng,
+             ev_acc_dpa,
+             ev_acc_gng] = self.session.run(ops_to_eval, feed_dict=feed_dict)
 
             predictions = {
                 'state': ev_hidden_bxtxd,
                 'output': ev_pred_output_bxtxd,
                 'ev_loss': ev_loss,
                 'ev_loss_dpa': ev_loss_dpa,
-                'ev_loss_gng': ev_loss_gng
+                'ev_loss_gng': ev_loss_gng,
+                'ev_acc_dpa': ev_acc_dpa,
+                'ev_acc_gng': ev_acc_gng
                 }
 
             return predictions
@@ -512,13 +533,15 @@ class DualTask(RecurrentWhisperer):
                 linewidth=2,
                 color='cyan')
 
-            # RNN outputs
-            plt.step(
-                tt,
-                vertical_offset + pred_output_txd[:, bit_idx],
-                where='mid',
-                color='purple',
-                linewidth=1.5,
-                linestyle='--')
+            if bit_idx == 0:
+                # RNN outputs
+                plt.step(
+                    tt,
+                    vertical_offset + pred_output_txd[:, 0],
+                    where='mid',
+                    color='purple',
+                    linewidth=1.5,
+                    linestyle='--')
 
         plt.xlim(-1, n_time)
+        plt.ylim(-1, n_bits*2+2)

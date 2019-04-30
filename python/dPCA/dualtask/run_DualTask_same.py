@@ -25,188 +25,125 @@ from dPCA import dPCA
 # *****************************************************************************
 # STEP 1: Train an RNN to solve the dual task *********************************
 # *****************************************************************************
-noise_rng = np.array([0, 0.2, 0.4, 0.6, 0.8])
-datalist = []
-f = plt.figure()
-plt.clf()
-INST = 1
+noise_rng = np.array([0.2, 0.3, 0.4, 0.5, 0.6])
+gng_rng = np.array([10])
 
 # Train various RNNs with diferent noise
-for inst in range(INST):
-    for noise in noise_rng:
-        # Hyperparameters for AdaptiveLearningRate
-        alr_hps = {'initial_rate': 0.1}
+for gng in gng_rng:
+    
+    datalist = []
+    f = plt.figure()
+    plt.clf()
+    INST = 4
 
-        # Hyperparameters for FlipFlop
-        # See FlipFlop.py for detailed descriptions.
-        hps = {
-            'rnn_type': 'vanilla',
-            'n_hidden': 256,
-            'min_loss': 1e-6,  # 1e-4
-            'min_learning_rate': 1e-5,
-            'max_n_epochs': 5000,
-            'do_restart_run': True,
-            'log_dir': './logs/',
-            'data_hps': {
-                'n_batch': 2048,
-                'n_time': 20,
-                'n_bits': 6,
-                'noise': noise,
-                'gng_time': 0,
-                'lamb': 0,
-                'delay_max': 0},
-            'alr_hps': alr_hps
-            }
+    for inst in range(INST):
+        for noise in noise_rng:
+            # Hyperparameters for AdaptiveLearningRate
+            alr_hps = {'initial_rate': 0.1}
+    
+            # Hyperparameters for FlipFlop
+            # See FlipFlop.py for detailed descriptions.
+            hps = {
+                'rnn_type': 'vanilla',
+                'n_hidden': 256,
+                'min_loss': 1e-6,  # 1e-4
+                'min_learning_rate': 1e-5,
+                'max_n_epochs': 5000,
+                'do_restart_run': True,
+                'log_dir': './logs/',
+                'data_hps': {
+                    'n_batch': 2048,
+                    'n_time': 20,
+                    'n_bits': 6,
+                    'noise': noise,
+                    'gng_time': gng,
+                    'lamb': 0,
+                    'delay_max': 0},
+                'alr_hps': alr_hps
+                }
+    
+            dt = DualTask(**hps)
+    
+            dt.train()
+    # Get example state trajectories from the network
+    # Visualize inputs, outputs, and RNN predictions from example trials
+            random.seed(noise*INST)
+            example_trials = dt.generate_dualtask_trials()
+    
+            n_bits = dt.hps.data_hps['n_bits']
+            n_batch = dt.hps.data_hps['n_batch']
+            n_states = dt.hps.n_hidden
+            n_time = dt.hps.data_hps['n_time']
+            is_lstm = dt.hps.rnn_type == 'lstm'
+            gng_time = dt.hps.data_hps['gng_time']
+            lamb = dt.hps.data_hps['lamb']
+            delay_max = dt.hps.data_hps['delay_max']
+    
+            # Adding noise to the inputs
+    #        example_trials['inputs'] += np.random.normal(scale=noise,
+    #                                                     size=example_trials[
+    #                                                             'inputs'].shape)
+    
+            example_predictions = dt.predict(example_trials,
+                                             do_predict_full_LSTM_state=is_lstm)
+    
+            loss = example_predictions['ev_loss']
+            loss_dpa = example_predictions['ev_loss_dpa']
+            loss_gng = example_predictions['ev_loss_gng']
+            acc_dpa = example_predictions['ev_acc_dpa']
+            acc_gng = example_predictions['ev_acc_gng']
+    
+            datalist.append([inst, noise, loss, loss_dpa, loss_gng, acc_dpa,
+                             acc_gng])
+            plt.figure(f.number)
+    #        plt.plot(noise, loss_dpa, '+')
+    #        plt.plot(noise, loss_gng, 'v')
+            plt.plot(noise, acc_dpa, '+', color='k')
+            if gng_time != 0:
+                plt.plot(noise, acc_gng, 'v', color='k')
+            plt.xlabel('Noise')
+            plt.ylabel('Accuracy')
+            plt.ion()
+            plt.draw()
+            plt.show()
+            plt.pause(0.01)
+    
+    data = {'datalist': datalist}
+    
+    fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
+    try:
+        os.mkdir(fig_dir)
+    except OSError:
+        np.savez(os.path.join(fig_dir, 'data_' + str(gng_time) + '_'
+                              + str(lamb) + '_' + str(delay_max)
+                              + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                              + '-' + str(noise_rng[-1])), **data)
+        plt.savefig(os.path.join(fig_dir, 'acc_inst_' + str(gng_time) + '_'
+                                 + str(lamb) + '_' + str(delay_max)
+                              + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                              + '-' + str(noise_rng[-1]) + '.png'))
+    else:
+        np.savez(os.path.join(fig_dir, 'data_' + str(gng_time) + '_'
+                              + str(lamb) + '_' + str(delay_max)
+                              + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                              + '-' + str(noise_rng[-1])), **data)
+        plt.savefig(os.path.join(fig_dir, 'acc_inst_' + str(gng_time) + '_'
+                                 + str(lamb) + '_' + str(delay_max)
+                              + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                              + '-' + str(noise_rng[-1]) + '.png'))
 
-        dt = DualTask(**hps)
-
-        dt.train()
-# Get example state trajectories from the network
-# Visualize inputs, outputs, and RNN predictions from example trials
-        random.seed(noise*INST)
-        example_trials = dt.generate_dualtask_trials()
-
-        n_bits = dt.hps.data_hps['n_bits']
-        n_batch = dt.hps.data_hps['n_batch']
-        n_states = dt.hps.n_hidden
-        n_time = dt.hps.data_hps['n_time']
-        is_lstm = dt.hps.rnn_type == 'lstm'
-        gng_time = dt.hps.data_hps['gng_time']
-        lamb = dt.hps.data_hps['lamb']
-        delay_max = dt.hps.data_hps['delay_max']
-
-        # Adding noise to the inputs
-#        example_trials['inputs'] += np.random.normal(scale=noise,
-#                                                     size=example_trials[
-#                                                             'inputs'].shape)
-
-        example_predictions = dt.predict(example_trials,
-                                         do_predict_full_LSTM_state=is_lstm)
-
-        loss = example_predictions['ev_loss']
-        loss_dpa = example_predictions['ev_loss_dpa']
-        loss_gng = example_predictions['ev_loss_gng']
-
-        datalist.append([inst, noise, loss, loss_dpa, loss_gng])
-        plt.figure(f.number)
-        plt.plot(noise, loss_dpa, '+')
-        plt.plot(noise, loss_gng, 'v')
-        plt.xlabel('Noise')
-        plt.ylabel('Loss')
-        plt.ion()
-        plt.draw()
-        plt.show()
-        plt.pause(0.01)
-
-data = {'datalist': datalist}
-
-fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
-try:
-    os.mkdir(fig_dir)
-except OSError:
-    np.savez(os.path.join(fig_dir, 'data_' + str(gng_time) + '_'
-                          + str(lamb) + '_' + str(delay_max)), **data)
-    plt.savefig(os.path.join(fig_dir, 'loss_inst_' + str(gng_time) + '_'
-                             + str(lamb) + '_' + str(delay_max) + '.png'))
-else:
-    np.savez(os.path.join(fig_dir, 'data_' + str(gng_time) + '_'
-                          + str(lamb) + '_' + str(delay_max)), **data)
-    plt.savefig(os.path.join(fig_dir, 'loss_inst_' + str(gng_time) + '_'
-                             + str(lamb) + '_' + str(delay_max) + '.png'))
-
-
-# Train other RNNs now with gng_time=10
-datalist = []
-f = plt.figure()
-plt.clf()
-
-for inst in range(INST):
-    for noise in noise_rng:
-        # Hyperparameters for AdaptiveLearningRate
-        alr_hps = {'initial_rate': 0.1}
-
-        # Hyperparameters for FlipFlop
-        # See FlipFlop.py for detailed descriptions.
-        hps = {
-            'rnn_type': 'vanilla',
-            'n_hidden': 256,
-            'min_loss': 1e-6,  # 1e-4
-            'min_learning_rate': 1e-5,
-            'max_n_epochs': 5000,
-            'do_restart_run': True,
-            'log_dir': './logs/',
-            'data_hps': {
-                'n_batch': 2048,
-                'n_time': 20,
-                'n_bits': 6,
-                'noise': noise,
-                'gng_time': 10,
-                'lamb': 0,
-                'delay_max': 0},
-            'alr_hps': alr_hps
-            }
-
-        dt = DualTask(**hps)
-
-        dt.train()
-# Get example state trajectories from the network
-# Visualize inputs, outputs, and RNN predictions from example trials        
-        random.seed(noise*INST)
-        example_trials = dt.generate_dualtask_trials()
-
-        n_bits = dt.hps.data_hps['n_bits']
-        n_batch = dt.hps.data_hps['n_batch']
-        n_states = dt.hps.n_hidden
-        n_time = dt.hps.data_hps['n_time']
-        is_lstm = dt.hps.rnn_type == 'lstm'
-        gng_time = dt.hps.data_hps['gng_time']
-        lamb = dt.hps.data_hps['lamb']
-        delay_max = dt.hps.data_hps['delay_max']
-
-        example_predictions = dt.predict(example_trials,
-                                         do_predict_full_LSTM_state=is_lstm)
-
-        loss = example_predictions['ev_loss']
-        loss_dpa = example_predictions['ev_loss_dpa']
-        loss_gng = example_predictions['ev_loss_gng']
-
-        datalist.append([inst, noise, loss, loss_dpa, loss_gng])
-        plt.figure(f.number)
-        plt.plot(noise, loss_dpa, '+')
-        plt.plot(noise, loss_gng, 'v')
-        plt.xlabel('Noise')
-        plt.ylabel('Loss')
-        plt.ion()
-        plt.draw()
-        plt.show()
-        plt.pause(0.01)
-
-data = {'datalist': datalist}
-
-fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
-try:
-    os.mkdir(fig_dir)
-except OSError:
-    np.savez(os.path.join(fig_dir, 'data_' + str(gng_time) + '_'
-                          + str(lamb) + '_' + str(delay_max)), **data)
-    plt.savefig(os.path.join(fig_dir, 'loss_inst_' + str(gng_time) + '_'
-                             + str(lamb) + '_' + str(delay_max) + '.png'))
-else:
-    np.savez(os.path.join(fig_dir, 'data_' + str(gng_time) + '_'
-                          + str(lamb) + '_' + str(delay_max)), **data)
-    plt.savefig(os.path.join(fig_dir, 'loss_inst_' + str(gng_time) + '_'
-                             + str(lamb) + '_' + str(delay_max) + '.png'))
 
 '''Plot data together'''
-data = np.load(fig_dir + '/data_0_0_0.npz')
+data = np.load(fig_dir + '/data_0_0_0' + '_i' + str(INST) + '_n' +
+               str(noise_rng[0]) + '-' + str(noise_rng[-1]) + '.npz')
 data = np.vstack(data['datalist'][i] for i in range(int(
         INST*noise_rng.shape[0])))
 
-mean_loss = []
-std = []
-for n in noise_rng:
-    mean_loss.append(np.mean(data[data[:, 1] == n, 3]))
-    std.append(np.std(data[data[:, 1] == n, 3]))
+#mean_loss = []
+#std = []
+#for n in noise_rng:
+#    mean_loss.append(np.mean(data[data[:, 1] == n, 3]))
+#    std.append(np.std(data[data[:, 1] == n, 3]))
 
 # mean_loss_gng = []
 # std_gng = []
@@ -214,23 +151,36 @@ for n in noise_rng:
 #    mean_loss_gng.append(np.mean(data[data[:, 1] == n, 4]))
 #    std_gng.append(np.std(data[data[:, 1] == n, 4]))
 
+mean_acc = []
+std = []
+for n in noise_rng:
+    mean_acc.append(np.mean(data[data[:, 1] == n, 5]))
+    std.append(np.std(data[data[:, 1] == n, 5]))
+
 plt.figure()
-plt.errorbar(noise_rng, mean_loss, yerr=std, marker='+',
-             label='loss dpa gng0 lamb0 delay0')
+plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
+             label='DPA accuracy dpa gng0')
 # if gng_time != 0:
 #    plt.errorbar(noise_rng, mean_loss_gng, yerr=std_gng, marker='v',
 #                 label='loss gng gng0 lamb0 delay0')
 
 # Other gng and lamb and delay
-data = np.load(fig_dir + '/data_10_0_0.npz')
+data = np.load(fig_dir + '/data_10_0_0' + '_i' + str(INST) + '_n' +
+               str(noise_rng[0]) + '-' + str(noise_rng[-1]) + '.npz')
 data = np.vstack(data['datalist'][i] for i in range(int(
         INST*noise_rng.shape[0])))
 
-mean_loss = []
+#mean_loss = []
+#std = []
+#for n in noise_rng:
+#    mean_loss.append(np.mean(data[data[:, 1] == n, 3]))
+#    std.append(np.std(data[data[:, 1] == n, 3]))
+
+mean_acc = []
 std = []
 for n in noise_rng:
-    mean_loss.append(np.mean(data[data[:, 1] == n, 3]))
-    std.append(np.std(data[data[:, 1] == n, 3]))
+    mean_acc.append(np.mean(data[data[:, 1] == n, 5]))
+    std.append(np.std(data[data[:, 1] == n, 5]))
 
 # mean_loss_gng = []
 # std_gng = []
@@ -239,8 +189,8 @@ for n in noise_rng:
 #    std_gng.append(np.std(data[data[:, 1] == n, 4]))
 
 
-plt.errorbar(noise_rng, mean_loss, yerr=std, marker='+',
-             label='loss general gng10 lamb0 delay0')
+plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
+             label='DPA accuracy gng10')
 # if gng_time != 0:
 #    plt.errorbar(noise_rng, mean_loss_gng, yerr=std_gng, marker='v',
 #                 label='loss gng gng10 lamb0 delay0')
@@ -293,7 +243,7 @@ plt.errorbar(noise_rng, mean_loss, yerr=std, marker='+',
 
 
 plt.xlabel('Noise')
-plt.ylabel('Mean loss')
+plt.ylabel('Mean accuracy')
 plt.legend()
 plt.show()
 

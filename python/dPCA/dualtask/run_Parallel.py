@@ -97,15 +97,21 @@ for gng in gng_rng:
 
         numcores = multiprocessing.cpu_count()
         acc = Parallel(n_jobs=numcores)(delayed(trainDualTask)(
-                noise, gng, INST) for inst in range(INST))
+                noise, gng, inst) for inst in range(INST))
+        acc_dpa = []
+        acc_gng = []
+        for i in range(INST):
+            acc_dpa.append(acc[i][0])
+            acc_gng.append(acc[i][1])
         # Save data in a list
-        datalist.append([noise, acc])
+        datalist.append([noise, acc_dpa, acc_gng])
         # Plot loss / accuracy for the different noise- instances
         plt.figure(f.number)
+        NOISE = np.repeat(noise, INST)
 #        plt.plot(noise, loss_dpa, '+')
 #        plt.plot(noise, loss_gng, 'v')
-        plt.plot(noise, acc[noise][0], '+', color='k')
-        plt.plot(noise, acc[noise][1], 'v', color='k')
+        plt.plot(NOISE, acc_dpa, '+', color='k')
+        plt.plot(NOISE, acc_gng, 'v', color='k')
         plt.xlabel('Noise')
         plt.ylabel('Accuracy')
         plt.ion()

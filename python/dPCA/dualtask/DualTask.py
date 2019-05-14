@@ -435,13 +435,13 @@ class DualTask(RecurrentWhisperer):
         '''See docstring in RecurrentWhisperer.'''
         FIG_WIDTH = 6  # inches
         FIX_HEIGHT = 9  # inches
-        self.fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
-                              tight_layout=True)
+#        self.fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
+#                              tight_layout=True)
 
     def _update_visualizations(self, train_data=None, valid_data=None):
         '''See docstring in RecurrentWhisperer.'''
         data = self.generate_dualtask_trials()
-        self.plot_trials(data)
+#        self.plot_trials(data)
 
     def plot_trials(self, data, start_time=0, stop_time=None):
         '''Plots example trials, complete with input pulses, correct outputs,

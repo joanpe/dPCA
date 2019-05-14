@@ -16,7 +16,7 @@ import random
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-PATH = '/home/joan/dPCA/python/dPCA'
+PATH = '/home/joanpe/dPCA/python/dPCA/dualtask/'
 sys.path.insert(0, PATH) 
 from DualTask import DualTask
 from dPCA import dPCA
@@ -30,10 +30,11 @@ import multiprocessing
 noise_rng = np.array([0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6])
 # Time of appearence of the go- no go task. 0 for no task.
 gng_rng = np.array([0, 10])
-lamb = 0, delay_max = 0
+lamb = np.array([0.2, 0.4])
+delay_max = np.array([0])
 
 
-def trainDualTask(noise, gng, inst):
+def trainDualTask(noise, gng, inst, lamb, delay):
     '''Train an RNN with a given noise and compute the value of the accuracy
     of its predictions'''
     # Hyperparameters for AdaptiveLearningRate
@@ -41,14 +42,16 @@ def trainDualTask(noise, gng, inst):
 
     # Hyperparameters for DualTask
     # See DualTask.py for detailed descriptions.
+    
     hps = {
         'rnn_type': 'vanilla',
         'n_hidden': 256,
         'min_loss': 1e-6,  # 1e-4
         'min_learning_rate': 1e-5,
         'max_n_epochs': 5000,
-        'do_restart_run': True,
-        'log_dir': './logs_' + str(gng) + '/' + str(inst),
+        'do_restart_run': False,
+        'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
+        str(noise) + '/delay' + str(delay) + '/inst' + str(inst),
         'data_hps': {
             'n_batch': 2048,
             'n_time': 20,
@@ -82,101 +85,117 @@ def trainDualTask(noise, gng, inst):
     # Accuracy of the predictions
     acc_dpa = example_predictions['ev_acc_dpa']
     acc_gng = example_predictions['ev_acc_gng']
-    return ([acc_dpa, acc_gng])
+    state = example_predictions['state']
+    return [acc_dpa, acc_gng, state]
 
 
 # Train various RNNs with diferent noise
 for gng in gng_rng:
 
-    datalist = []
+    acc = []
+    state = []
     f = plt.figure()
     plt.clf()
     # number of RNN instances
     INST = 10
+    
+    for l in  lamb:
+        
+        for delay in delay_max:
 
-    for noise in noise_rng:
+            for noise in noise_rng:
+        
+                numcores = multiprocessing.cpu_count()
+                ops = Parallel(n_jobs=numcores)(delayed(
+                        trainDualTask)(noise, gng, inst, l, delay) for inst in range(INST))
+                
+                # Save data in a list
+                NOISE = np.repeat(noise, INST)
+                acc_dpa = []
+                acc_gng = []
+                for i in range(INST):
+                    acc_dpa.append(ops[i][0])
+                    acc_gng.append(ops[i][1])
+                    state.append([noise, ops[i][2]])
+                acc.append([noise, acc_dpa, acc_gng])
+                # Plot loss / accuracy for the different noise- instances
+                plt.figure(f.number)
+        #        plt.plot(noise, loss_dpa, '+')
+        #        plt.plot(noise, loss_gng, 'v')
+                plt.plot(NOISE, acc_dpa, '+', color='k')
+                plt.plot(NOISE, acc_gng, 'v', color='k')
+                plt.xlabel('Noise')
+                plt.ylabel('Accuracy')
+                plt.ion()
+                plt.draw()
+                plt.show()
+                plt.pause(0.01)
+    
+        # save data and figure
+            data = {'acc': acc, 'state': state}
+        
+            fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
+            if os.path.isdir(fig_dir) is False:
+                os.mkdir(fig_dir)
+                np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
+                                      + str(l) + '_' + str(delay)
+                                      + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                      + '-' + str(noise_rng[-1])), **data)
+                plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
+                                         + str(l) + '_' + str(delay)
+                                         + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                         + '-' + str(noise_rng[-1]) + '.png'))
+            else:
+                np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
+                                      + str(l) + '_' + str(delay)
+                                      + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                      + '-' + str(noise_rng[-1])), **data)
+                plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
+                                         + str(l) + '_' + str(delay)
+                                         + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                         + '-' + str(noise_rng[-1]) + '.png'))
 
-        numcores = multiprocessing.cpu_count()
-        acc = Parallel(n_jobs=numcores)(delayed(trainDualTask)(
-                noise, gng, inst) for inst in range(INST))
-        acc_dpa = []
-        acc_gng = []
-        for i in range(INST):
-            acc_dpa.append(acc[i][0])
-            acc_gng.append(acc[i][1])
-        # Save data in a list
-        NOISE = np.repeat(noise, INST)
-        datalist.append([NOISE, acc_dpa, acc_gng])
-        # Plot loss / accuracy for the different noise- instances
-        plt.figure(f.number)
-#        plt.plot(noise, loss_dpa, '+')
-#        plt.plot(noise, loss_gng, 'v')
-        plt.plot(NOISE, acc_dpa, '+', color='k')
-        plt.plot(NOISE, acc_gng, 'v', color='k')
-        plt.xlabel('Noise')
-        plt.ylabel('Accuracy')
-        plt.ion()
-        plt.draw()
-        plt.show()
-        plt.pause(0.01)
 
-    # save data and figure
-    data = {'datalist': datalist}
-
-    fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
-    try:
-        os.mkdir(fig_dir)
-    except OSError:
-        np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
-                              + str(lamb) + '_' + str(delay_max)
-                              + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                              + '-' + str(noise_rng[-1])), **data)
-        plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
-                                 + str(lamb) + '_' + str(delay_max)
-                                 + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                 + '-' + str(noise_rng[-1]) + '.png'))
-    else:
-        np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
-                              + str(lamb) + '_' + str(delay_max)
-                              + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                              + '-' + str(noise_rng[-1])), **data)
-        plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
-                                 + str(lamb) + '_' + str(delay_max)
-                                 + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                 + '-' + str(noise_rng[-1]) + '.png'))
+fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
 
 '''Plot data together'''
 # Loading the data for task without distractor
-data = np.load(fig_dir + '/data_0_0_0' + '_i' + str(INST) + '_n' +
-               str(noise_rng[0]) + '-' + str(noise_rng[-1]) + '.npz')
-data = np.hstack(data['datalist'][i] for i in range(noise_rng.shape[0]))
-
-# Compute the mean accuracy across instances
-mean_acc = []
-std = []
-for n in noise_rng:
-    mean_acc.append(np.mean(data[1, data[0, :] == n]))
-    std.append(np.std(data[1, data[0, :] == n]))
-# Plot with error bars of the accuracy / loss
 plt.figure()
-plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
-             label='DPA accuracy dpa gng0')
+for l in lamb:
+    for delay in delay_max:
+        data = np.load(fig_dir + '/data_0_' + str(l) + '_' + str(delay) +
+                       '_i' + str(INST) + '_n' + str(noise_rng[0]) + '-' +
+                       str(noise_rng[-1]) + '.npz')
+        data = data['acc']
+        
+        # Compute the mean accuracy across instances
+        mean_acc = []
+        std = []
+        for n in range(noise_rng.shape[0]):
+            mean_acc.append(np.mean(data[n][1]))
+            std.append(np.std(data[n][1]))
+        # Plot with error bars of the accuracy / loss
+        plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
+                     label='DPA accuracy dpa gng0 lamb' + str(l))
 
 # Loading data for task with distractor
-data = np.load(fig_dir + '/data_10_0_0' + '_i' + str(INST) + '_n' +
-               str(noise_rng[0]) + '-' + str(noise_rng[-1]) + '.npz')
-data = np.hstack(data['datalist'][i] for i in range(noise_rng.shape[0]))
-
-# Compute the mean accuracy across instances
-mean_acc = []
-std = []
-for n in noise_rng:
-    mean_acc.append(np.mean(data[1, data[0, :] == n]))
-    std.append(np.std(data[1, data[0, :] == n]))
-
-# Plot with error bars of the accuracy / loss
-plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
-             label='DPA accuracy gng10')
+for l in lamb:
+    for delay in delay_max:
+        data10 = np.load(fig_dir + '/data_10_' + str(l) + '_' + str(delay) +
+                         '_i' + str(INST) + '_n' + str(noise_rng[0]) + '-' +
+                         str(noise_rng[-1]) + '.npz')
+        data10 = data10['acc']
+        
+        # Compute the mean accuracy across instances
+        mean_acc = []
+        std = []
+        for n in range(noise_rng.shape[0]):
+            mean_acc.append(np.mean(data10[n][1]))
+            std.append(np.std(data10[n][1]))
+        
+        # Plot with error bars of the accuracy / loss
+        plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
+                     label='DPA accuracy gng10' + str(l))
 
 
 plt.xlabel('Noise')

@@ -163,6 +163,10 @@ class DualTask(RecurrentWhisperer):
         self.hidden_bxtxd, _ = tf.nn.dynamic_rnn(self.rnn_cell,
                                                  self.inputs_bxtxd,
                                                  initial_state=initial_state)
+        # TODO add noise to hidden states (neurons) with:
+        self.noise = tf.constant(0.2, dtype='float32')
+        self.hidden_bxtxd += tf.random.normal(shape=tf.shape(
+                self.hidden_bxtxd), stddev=self.noise, dtype=tf.float32)
 
         # Readout from RNN
         np_W_out, np_b_out = self._np_init_weight_matrix(n_hidden, n_output)

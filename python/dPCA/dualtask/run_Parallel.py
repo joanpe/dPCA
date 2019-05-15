@@ -48,7 +48,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     
     hps = {
         'rnn_type': 'vanilla',
-        'n_hidden': 256,
+        'n_hidden': neuron,
         'min_loss': 1e-6,  # 1e-4
         'min_learning_rate': 1e-5,
         'max_n_epochs': 5000,

@@ -29,7 +29,7 @@ import multiprocessing
 # Noise range for the input to the RNN
 noise_rng = np.array([0])
 # Time of appearence of the go- no go task. 0 for no task.
-gng_rng = np.array([0])
+gng_rng = np.array([10])
 lamb = np.array([0.0])
 delay_max = np.array([0])
 num_neurons = np.array([8, 16, 32])
@@ -118,9 +118,9 @@ for gng in gng_rng:
                     acc_dpa = []
                     acc_gng = []
                     for i in range(INST):
-                        acc_dpa.append(ops[0])
-                        acc_gng.append(ops[1])
-                        state.append([noise, ops[2]])
+                        acc_dpa.append(ops[i][0])
+                        acc_gng.append(ops[i][1])
+                        state.append([noise, ops[i][2]])
                     acc.append([noise, acc_dpa, acc_gng])
                     # Plot loss / accuracy for the different noise- instances
                     plt.figure(f.number)
@@ -144,20 +144,28 @@ for gng in gng_rng:
                 np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
                                       + str(l) + '_' + str(delay)
                                       + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                      + '-' + str(noise_rng[-1])), **data)
+                                      + '-' + str(noise_rng[-1])
+                                      + '_neu' + str(num_neurons[0])
+                                      + '-' + str(num_neurons[-1])), **data)
                 plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
                                          + str(l) + '_' + str(delay)
                                          + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                         + '-' + str(noise_rng[-1]) + '.png'))
+                                         + '-' + str(noise_rng[-1])
+                                         + '_neu' + str(num_neurons[0])
+                                         + '-' + str(num_neurons[-1]) + '.png'))
             else:
                 np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
                                       + str(l) + '_' + str(delay)
                                       + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                      + '-' + str(noise_rng[-1])), **data)
+                                      + '-' + str(noise_rng[-1])
+                                      + '_neu' + str(num_neurons[0])
+                                      + '-' + str(num_neurons[-1])), **data)
                 plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
                                          + str(l) + '_' + str(delay)
                                          + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                         + '-' + str(noise_rng[-1]) + '.png'))
+                                         + '-' + str(noise_rng[-1])
+                                         + '_neu' + str(num_neurons[0])
+                                         + '-' + str(num_neurons[-1]) + '.png'))
 
 
 fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
@@ -169,13 +177,14 @@ for l in lamb:
     for delay in delay_max:
         data = np.load(fig_dir + '/data_0_' + str(l) + '_' + str(delay) +
                        '_i' + str(INST) + '_n' + str(noise_rng[0]) + '-' +
-                       str(noise_rng[-1]) + '.npz')
+                       str(noise_rng[-1]) + '_neu' + str(num_neurons[0])
+                       + '-' + str(num_neurons[-1]) + '.npz')
         data = data['acc']
         
         # Compute the mean accuracy across instances
         mean_acc = []
         std = []
-        for n in range(noise_rng.shape[0]):
+        for n in range(num_neurons.shape[0]):
             mean_acc.append(np.mean(data[n][1]))
             std.append(np.std(data[n][1]))
         # Plot with error bars of the accuracy / loss
@@ -187,13 +196,14 @@ for l in lamb:
     for delay in delay_max:
         data10 = np.load(fig_dir + '/data_10_' + str(l) + '_' + str(delay) +
                          '_i' + str(INST) + '_n' + str(noise_rng[0]) + '-' +
-                         str(noise_rng[-1]) + '.npz')
+                         str(noise_rng[-1]) + '_neu' + str(num_neurons[0])
+                         + '-' + str(num_neurons[-1]) + '.npz')
         data10 = data10['acc']
 
         # Compute the mean accuracy across instances
         mean_acc = []
         std = []
-        for n in range(noise_rng.shape[0]):
+        for n in range(num_neurons.shape[0]):
             mean_acc.append(np.mean(data10[n][1]))
             std.append(np.std(data10[n][1]))
 

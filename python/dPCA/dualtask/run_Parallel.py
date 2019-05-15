@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 PATH = '/home/joanpe/dPCA/python/dPCA/dualtask/'
 sys.path.insert(0, PATH) 
 from DualTask import DualTask
-from dPCA import dPCA
+#from dPCA import dPCA
 from joblib import Parallel, delayed
 import multiprocessing
 
@@ -27,14 +27,17 @@ import multiprocessing
 # STEP 1: Train RNNs to solve the dual task *********************************
 # *****************************************************************************
 # Noise range for the input to the RNN
-noise_rng = np.array([0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6])
+noise_rng = np.array([0])
 # Time of appearence of the go- no go task. 0 for no task.
-gng_rng = np.array([0, 10])
-lamb = np.array([0.2, 0.4])
+gng_rng = np.array([0])
+lamb = np.array([0.0])
 delay_max = np.array([0])
+num_neurons = np.array([8, 16, 32])
+# number of RNN instances
+INST = 3
 
 
-def trainDualTask(noise, gng, inst, lamb, delay):
+def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     '''Train an RNN with a given noise and compute the value of the accuracy
     of its predictions'''
     # Hyperparameters for AdaptiveLearningRate
@@ -51,7 +54,8 @@ def trainDualTask(noise, gng, inst, lamb, delay):
         'max_n_epochs': 5000,
         'do_restart_run': False,
         'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
-        str(noise) + '/delay' + str(delay) + '/inst' + str(inst),
+        str(noise) + '/delay' + str(delay) + '/inst' + str(inst) + '/neurons' +
+        str(neuron),
         'data_hps': {
             'n_batch': 2048,
             'n_time': 20,
@@ -96,8 +100,6 @@ for gng in gng_rng:
     state = []
     f = plt.figure()
     plt.clf()
-    # number of RNN instances
-    INST = 10
     
     for l in  lamb:
         
@@ -105,31 +107,33 @@ for gng in gng_rng:
 
             for noise in noise_rng:
         
-                numcores = multiprocessing.cpu_count()
-                ops = Parallel(n_jobs=numcores)(delayed(
-                        trainDualTask)(noise, gng, inst, l, delay) for inst in range(INST))
-                
-                # Save data in a list
-                NOISE = np.repeat(noise, INST)
-                acc_dpa = []
-                acc_gng = []
-                for i in range(INST):
-                    acc_dpa.append(ops[i][0])
-                    acc_gng.append(ops[i][1])
-                    state.append([noise, ops[i][2]])
-                acc.append([noise, acc_dpa, acc_gng])
-                # Plot loss / accuracy for the different noise- instances
-                plt.figure(f.number)
-        #        plt.plot(noise, loss_dpa, '+')
-        #        plt.plot(noise, loss_gng, 'v')
-                plt.plot(NOISE, acc_dpa, '+', color='k')
-                plt.plot(NOISE, acc_gng, 'v', color='k')
-                plt.xlabel('Noise')
-                plt.ylabel('Accuracy')
-                plt.ion()
-                plt.draw()
-                plt.show()
-                plt.pause(0.01)
+                for neuron in num_neurons:
+                    numcores = multiprocessing.cpu_count()
+                    ops = Parallel(n_jobs=numcores)(delayed(
+                            trainDualTask)(noise, gng, inst, l, delay,
+                                         neuron) for inst in range(INST))
+                    
+                    # Save data in a list
+                    NOISE = np.repeat(neuron, INST)
+                    acc_dpa = []
+                    acc_gng = []
+                    for i in range(INST):
+                        acc_dpa.append(ops[0])
+                        acc_gng.append(ops[1])
+                        state.append([noise, ops[2]])
+                    acc.append([noise, acc_dpa, acc_gng])
+                    # Plot loss / accuracy for the different noise- instances
+                    plt.figure(f.number)
+            #        plt.plot(noise, loss_dpa, '+')
+            #        plt.plot(noise, loss_gng, 'v')
+                    plt.plot(NOISE, acc_dpa, '+', color='k')
+                    plt.plot(NOISE, acc_gng, 'v', color='k')
+                    plt.xlabel('Num neurons')
+                    plt.ylabel('Accuracy')
+                    plt.ion()
+                    plt.draw()
+                    plt.show()
+                    plt.pause(0.01)
     
         # save data and figure
             data = {'acc': acc, 'state': state}
@@ -185,14 +189,14 @@ for l in lamb:
                          '_i' + str(INST) + '_n' + str(noise_rng[0]) + '-' +
                          str(noise_rng[-1]) + '.npz')
         data10 = data10['acc']
-        
+
         # Compute the mean accuracy across instances
         mean_acc = []
         std = []
         for n in range(noise_rng.shape[0]):
             mean_acc.append(np.mean(data10[n][1]))
             std.append(np.std(data10[n][1]))
-        
+
         # Plot with error bars of the accuracy / loss
         plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
                      label='DPA accuracy gng10' + str(l))

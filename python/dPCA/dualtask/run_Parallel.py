@@ -193,7 +193,7 @@ for l in lamb:
             std.append(np.std(data[n][1]))
             acc.append(data[n][1])
             
-        plt.plot(num_neurons, acc, marker='o', color='b')
+        plt.scatter(num_neurons, acc, marker='o', color='b')
         # Plot with error bars of the accuracy / loss
         plt.plot(num_neurons, mean_acc, marker='+', ms=15, color='b',
                      label='DPA accuracy dpa gng0 lamb' + str(l))
@@ -216,7 +216,7 @@ for l in lamb:
             std.append(np.std(data10[n][1]))
             acc.append(data10[n][1])
             
-        plt.plot(num_neurons, acc, marker='o', color='r')
+        plt.scatter(num_neurons, acc, marker='o', color='r')
 
         # Plot with error bars of the accuracy / loss
         plt.plot(num_neurons, mean_acc, marker='+', ms=15, color='r',

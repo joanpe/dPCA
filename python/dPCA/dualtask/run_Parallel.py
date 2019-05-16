@@ -190,6 +190,8 @@ for l in lamb:
         for n in range(num_neurons.shape[0]):
             mean_acc.append(np.mean(data[n][1]))
             std.append(np.std(data[n][1]))
+            
+        for n in num_neurons:
             plt.scatter(np.repeat(n, INST), data[n][1], marker='o', color='b')
        
         # Plot with error bars of the accuracy / loss
@@ -211,6 +213,8 @@ for l in lamb:
         for n in range(num_neurons.shape[0]):
             mean_acc.append(np.mean(data10[n][1]))
             std.append(np.std(data10[n][1]))
+            
+        for n in num_neurons:
             plt.scatter(np.repeat(n, INST), data10[n][1], marker='o', color='r')
             
         # Plot with error bars of the accuracy / loss

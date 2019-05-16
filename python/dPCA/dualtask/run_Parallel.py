@@ -31,7 +31,7 @@ import multiprocessing
 noise_rng = np.array([0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6])
 # Time of appearence of the go- no go task. 0 for no task.
 gng_rng = np.array([0, 10])
-lamb = np.array([0.0])
+lamb = np.array([0.2])
 delay_max = np.array([0])
 num_neurons = np.array([4, 8, 16, 32])
 # number of RNN instances
@@ -257,10 +257,28 @@ for l in lamb:
 
         # Plot with error bars of the accuracy / loss
         plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
-                     label='DPA accuracy gng10' + str(l))
+                     label='DPA accuracy dpa gng10' + str(l))
 
 
 plt.xlabel('Noise')
 plt.ylabel('Mean accuracy')
 plt.legend()
 plt.show()
+
+if os.path.isdir(fig_dir) is False:
+    os.mkdir(fig_dir)
+    plt.savefig(os.path.join(fig_dir, 'mean_ acc_noise_'
+                             + str(l) + '_' + str(delay)
+                             + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                             + '-' + str(noise_rng[-1])
+                             + '_neu' + str(num_neurons[0])
+                             + '-' + str(num_neurons[-1]) + '.png'))
+else:
+    plt.savefig(os.path.join(fig_dir, 'mean_acc_noise_'
+                             + str(l) + '_' + str(delay)
+                             + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                             + '-' + str(noise_rng[-1])
+                             + '_neu' + str(num_neurons[0])
+                             + '-' + str(num_neurons[-1]) + '.png'))
+   
+

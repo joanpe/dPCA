@@ -33,9 +33,9 @@ noise_rng = np.array([0])
 gng_rng = np.array([0, 10])
 lamb = np.array([0.0])
 delay_max = np.array([0])
-num_neurons = np.array([4, 8, 16, 32, 64])
+num_neurons = np.array([4, 8, 16, 32, 64, 128])
 # number of RNN instances
-INST = 10
+INST = 20
 
 
 def trainDualTask(noise, gng, inst, lamb, delay, neuron):
@@ -118,7 +118,7 @@ for gng in gng_rng:
                     NOISE = np.repeat(neuron, INST)
                     acc_dpa = []
                     acc_gng = []
-                    for i in range(INST):
+                    for i in range(INST):acc_noise_
                         acc_dpa.append(ops[i][0])
                         acc_gng.append(ops[i][1])
                         state.append([noise, ops[i][2]])
@@ -190,8 +190,9 @@ for l in lamb:
         for n in range(num_neurons.shape[0]):
             mean_acc.append(np.mean(data[n][1]))
             std.append(np.std(data[n][1]))
+            plt.plot(data[n][1], marker='.', color='b')
         # Plot with error bars of the accuracy / loss
-        plt.errorbar(num_neurons, mean_acc, yerr=std, marker='+',
+        plt.plot(num_neurons, mean_acc, yerr=std, marker='+', ms=5, color='b',
                      label='DPA accuracy dpa gng0 lamb' + str(l))
 
 # Loading data for task with distractor
@@ -209,9 +210,10 @@ for l in lamb:
         for n in range(num_neurons.shape[0]):
             mean_acc.append(np.mean(data10[n][1]))
             std.append(np.std(data10[n][1]))
+            plt.plot(data10[n][1], marker='.', color='b')
 
         # Plot with error bars of the accuracy / loss
-        plt.errorbar(num_neurons, mean_acc, yerr=std, marker='+',
+        plt.plot(num_neurons, mean_acc, yerr=std, marker='+', ms=5, color='r',
                      label='DPA accuracy gng10 lamb' + str(l))
 
 plt.xlabel('Number of neurons')

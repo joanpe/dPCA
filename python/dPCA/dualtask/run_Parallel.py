@@ -118,7 +118,7 @@ for gng in gng_rng:
                     NOISE = np.repeat(neuron, INST)
                     acc_dpa = []
                     acc_gng = []
-                    for i in range(INST):acc_noise_
+                    for i in range(INST):
                         acc_dpa.append(ops[i][0])
                         acc_gng.append(ops[i][1])
                         state.append([noise, ops[i][2]])

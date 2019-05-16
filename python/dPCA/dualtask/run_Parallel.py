@@ -187,13 +187,11 @@ for l in lamb:
         # Compute the mean accuracy across instances
         mean_acc = []
         std = []
-        acc = []
         for n in range(num_neurons.shape[0]):
             mean_acc.append(np.mean(data[n][1]))
             std.append(np.std(data[n][1]))
-            acc.append(data[n][1])
-            
-        plt.scatter(num_neurons, acc, marker='o', color='b')
+            plt.scatter(np.repeat(n, INST), data[n][1], marker='o', color='b')
+       
         # Plot with error bars of the accuracy / loss
         plt.plot(num_neurons, mean_acc, marker='+', ms=15, color='b',
                      label='DPA accuracy dpa gng0 lamb' + str(l))
@@ -210,14 +208,11 @@ for l in lamb:
         # Compute the mean accuracy across instances
         mean_acc = []
         std = []
-        acc = []
         for n in range(num_neurons.shape[0]):
             mean_acc.append(np.mean(data10[n][1]))
             std.append(np.std(data10[n][1]))
-            acc.append(data10[n][1])
+            plt.scatter(np.repeat(n, INST), data10[n][1], marker='o', color='r')
             
-        plt.scatter(num_neurons, acc, marker='o', color='r')
-
         # Plot with error bars of the accuracy / loss
         plt.plot(num_neurons, mean_acc, marker='+', ms=15, color='r',
                      label='DPA accuracy gng10 lamb' + str(l))

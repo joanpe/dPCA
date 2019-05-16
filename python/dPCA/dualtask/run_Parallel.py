@@ -188,7 +188,7 @@ for l in lamb:
             mean_acc.append(np.mean(data[n][1]))
             std.append(np.std(data[n][1]))
         # Plot with error bars of the accuracy / loss
-        plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
+        plt.errorbar(num_neurons, mean_acc, yerr=std, marker='+',
                      label='DPA accuracy dpa gng0 lamb' + str(l))
 
 # Loading data for task with distractor
@@ -208,7 +208,7 @@ for l in lamb:
             std.append(np.std(data10[n][1]))
 
         # Plot with error bars of the accuracy / loss
-        plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
+        plt.errorbar(num_neurons, mean_acc, yerr=std, marker='+',
                      label='DPA accuracy gng10' + str(l))
 
 

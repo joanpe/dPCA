@@ -195,7 +195,7 @@ for l in lamb:
             
         plt.plot(num_neurons, acc, marker='.', color='b')
         # Plot with error bars of the accuracy / loss
-        plt.plot(num_neurons, mean_acc, yerr=std, marker='+', ms=5, color='b',
+        plt.plot(num_neurons, mean_acc, marker='+', ms=5, color='b',
                      label='DPA accuracy dpa gng0 lamb' + str(l))
 
 # Loading data for task with distractor
@@ -216,10 +216,10 @@ for l in lamb:
             std.append(np.std(data10[n][1]))
             acc.append(data10[n][1])
             
-        plt.plot(num_neurons, acc, marker='.', color='b')
+        plt.plot(num_neurons, acc, marker='.', color='r')
 
         # Plot with error bars of the accuracy / loss
-        plt.plot(num_neurons, mean_acc, yerr=std, marker='+', ms=5, color='r',
+        plt.plot(num_neurons, mean_acc, marker='+', ms=5, color='r',
                      label='DPA accuracy gng10 lamb' + str(l))
 
 plt.xlabel('Number of neurons')

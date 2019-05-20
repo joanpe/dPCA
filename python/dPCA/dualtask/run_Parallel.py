@@ -118,7 +118,7 @@ for gng in gng_rng:
                                          neuron) for inst in range(INST))
                     
                     # Save data in a list
-                    NOISE = np.repeat(neuron, INST)
+                    NOISE = np.repeat(noise, INST)
                     acc_dpa = []
                     acc_gng = []
                     for i in range(INST):

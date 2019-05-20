@@ -232,7 +232,8 @@ class DualTask(RecurrentWhisperer):
         ops_to_eval = [self.train_op,
                        self.grad_global_norm,
                        self.loss,
-                       self.merged_opt_summary]
+                       self.merged_opt_summary,
+                       self.acc_dpa]
 
         feed_dict = dict()
         feed_dict[self.inputs_bxtxd] = batch_data['inputs']
@@ -242,8 +243,8 @@ class DualTask(RecurrentWhisperer):
         [ev_train_op,
          ev_grad_global_norm,
          ev_loss,
-         ev_merged_opt_summary] = self.session.run(ops_to_eval,
-                                                      feed_dict=feed_dict)
+         ev_merged_opt_summary,
+         ev_acc_dpa] = self.session.run(ops_to_eval, feed_dict=feed_dict)
 
         if self.hps.do_save_tensorboard_events:
 
@@ -258,7 +259,8 @@ class DualTask(RecurrentWhisperer):
 
             self.writer.add_summary(ev_merged_opt_summary, self._step())
 
-        summary = {'loss': ev_loss, 'grad_global_norm': ev_grad_global_norm}
+        summary = {'loss': ev_loss, 'grad_global_norm': ev_grad_global_norm,
+                   'acc_dpa': ev_acc_dpa}
 
         return summary
 
@@ -439,8 +441,8 @@ class DualTask(RecurrentWhisperer):
         hps = self.hps
         n_batch = self.hps.data_hps['n_batch']
         n_time = self.hps.data_hps['n_time']
-#        n_plot = np.min([hps.n_trials_plot, n_batch])
-        n_plot = 10
+        n_plot = np.min([hps.n_trials_plot, n_batch])
+#        n_plot = 10
         dpa2_time = data['vec_tau']
 
         f = plt.figure(self.fig.number)

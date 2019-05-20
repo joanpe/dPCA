@@ -180,22 +180,6 @@ class DualTask(RecurrentWhisperer):
         # tf.nn.sigmoid_cross_entropy_with_logits(labels=self.output_bxtxd,
         # logits=self.pred_output_bxtxd)
 
-# COMPUTE LOSS ONLY IN PARTICULAR TIME STEPS
-#        self.loss_dpa = tf.reduce_mean(tf.squared_difference(
-#                self.output_bxtxd[:, n_time-1, 0], self.pred_output_bxtxd[
-#                        :, n_time-1, 0]))
-#
-#        if gng_time != 0:
-#
-#            self.loss_gng = tf.reduce_mean(tf.squared_difference(
-#                self.output_bxtxd[:, gng_time, 0], self.pred_output_bxtxd[
-#                        :, gng_time, 0]))
-#        else:
-#            self.loss_gng = tf.constant(0, dtype='float32')
-#
-#        self.loss = self.loss_dpa + self.loss_gng
-        self.loss_gng = tf.constant(0, dtype='float32')
-        self.loss_dpa = tf.constant(0, dtype='float32')
 # COMPUTE LOSS IN ALL TIMESTEPS
         self.loss = tf.reduce_mean(tf.squared_difference(
                 self.output_bxtxd, self.pred_output_bxtxd))
@@ -248,9 +232,7 @@ class DualTask(RecurrentWhisperer):
         ops_to_eval = [self.train_op,
                        self.grad_global_norm,
                        self.loss,
-                       self.merged_opt_summary,
-                       self.loss_dpa,
-                       self.loss_gng]
+                       self.merged_opt_summary]
 
         feed_dict = dict()
         feed_dict[self.inputs_bxtxd] = batch_data['inputs']
@@ -260,8 +242,7 @@ class DualTask(RecurrentWhisperer):
         [ev_train_op,
          ev_grad_global_norm,
          ev_loss,
-         ev_merged_opt_summary,
-         ev_loss_dpa, ev_loss_gng] = self.session.run(ops_to_eval,
+         ev_merged_opt_summary] = self.session.run(ops_to_eval,
                                                       feed_dict=feed_dict)
 
         if self.hps.do_save_tensorboard_events:
@@ -277,8 +258,7 @@ class DualTask(RecurrentWhisperer):
 
             self.writer.add_summary(ev_merged_opt_summary, self._step())
 
-        summary = {'loss': ev_loss, 'grad_global_norm': ev_grad_global_norm,
-                   'loss_dpa': ev_loss_dpa, 'loss_gng': ev_loss_gng}
+        summary = {'loss': ev_loss, 'grad_global_norm': ev_grad_global_norm}
 
         return summary
 
@@ -313,25 +293,18 @@ class DualTask(RecurrentWhisperer):
             return self._predict_with_LSTM_cell_states(batch_data)
         else:
             ops_to_eval = [self.hidden_bxtxd, self.pred_output_bxtxd,
-                           self.loss, self.loss_dpa, self.loss_gng,
                            self.acc_dpa, self.acc_gng ]
             feed_dict = dict()
             feed_dict[self.inputs_bxtxd] = batch_data['inputs']
             feed_dict[self.output_bxtxd] = batch_data['output']
             [ev_hidden_bxtxd,
              ev_pred_output_bxtxd,
-             ev_loss,
-             ev_loss_dpa,
-             ev_loss_gng,
              ev_acc_dpa,
              ev_acc_gng] = self.session.run(ops_to_eval, feed_dict=feed_dict)
 
             predictions = {
                 'state': ev_hidden_bxtxd,
                 'output': ev_pred_output_bxtxd,
-                'ev_loss': ev_loss,
-                'ev_loss_dpa': ev_loss_dpa,
-                'ev_loss_gng': ev_loss_gng,
                 'ev_acc_dpa': ev_acc_dpa,
                 'ev_acc_gng': ev_acc_gng
                 }
@@ -439,8 +412,8 @@ class DualTask(RecurrentWhisperer):
         '''See docstring in RecurrentWhisperer.'''
         FIG_WIDTH = 6  # inches
         FIX_HEIGHT = 9  # inches
-#        self.fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
-#                              tight_layout=True)
+        self.fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
+                              tight_layout=True)
 
     def _update_visualizations(self, train_data=None, valid_data=None):
         '''See docstring in RecurrentWhisperer.'''
@@ -466,7 +439,8 @@ class DualTask(RecurrentWhisperer):
         hps = self.hps
         n_batch = self.hps.data_hps['n_batch']
         n_time = self.hps.data_hps['n_time']
-        n_plot = np.min([hps.n_trials_plot, n_batch])
+#        n_plot = np.min([hps.n_trials_plot, n_batch])
+        n_plot = 20
         dpa2_time = data['vec_tau']
 
         f = plt.figure(self.fig.number)

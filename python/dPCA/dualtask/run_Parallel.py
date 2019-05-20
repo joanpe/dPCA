@@ -83,6 +83,9 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
 #        example_trials['inputs'] += np.random.normal(scale=noise,
 #                                                     size=example_trials[
 #                                                             'inputs'].shape)
+    
+    # Plot lasts 20 trials
+    dt.plot_trials(example_trials)
     # Compute RNN predictions from example trials
     example_predictions = dt.predict(example_trials,
                                      do_predict_full_LSTM_state=is_lstm)

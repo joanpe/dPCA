@@ -440,7 +440,7 @@ class DualTask(RecurrentWhisperer):
         n_batch = self.hps.data_hps['n_batch']
         n_time = self.hps.data_hps['n_time']
 #        n_plot = np.min([hps.n_trials_plot, n_batch])
-        n_plot = 20
+        n_plot = 10
         dpa2_time = data['vec_tau']
 
         f = plt.figure(self.fig.number)

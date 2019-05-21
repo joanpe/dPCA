@@ -28,12 +28,12 @@ import multiprocessing
 # *****************************************************************************
 # Noise range for the input to the RNN
 #noise_rng = np.array([0])
-noise_rng = np.array([0, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6])
+noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task.
 gng_rng = np.array([0, 10])
 lamb = np.array([0.0])
 delay_max = np.array([0])
-num_neurons = np.array([32])
+num_neurons = np.array([64])
 # number of RNN instances
 INST = 20
 
@@ -131,7 +131,7 @@ for gng in gng_rng:
             #        plt.plot(noise, loss_dpa, '+')
             #        plt.plot(noise, loss_gng, 'v')
                     plt.plot(NOISE, acc_dpa, '+', color='k')
-                    plt.plot(NOISE, acc_gng, 'v', color='k')
+#                    plt.plot(NOISE, acc_gng, 'v', color='k')
                     plt.xlabel('Num neurons')
                     plt.ylabel('Accuracy')
                     plt.ion()

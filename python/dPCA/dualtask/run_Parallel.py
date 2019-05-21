@@ -244,7 +244,8 @@ for l in lamb:
     for delay in delay_max:
         data = np.load(fig_dir + '/data_0_' + str(l) + '_' + str(delay) +
                        '_i' + str(INST) + '_n' + str(noise_rng[0]) + '-' +
-                       str(noise_rng[-1]) + '.npz')
+                       str(noise_rng[-1]) + '_neu' + str(num_neurons[0])
+                       + '-' + str(num_neurons[-1]) + '.npz')
         data = data['acc']
         
         # Compute the mean accuracy across instances
@@ -262,7 +263,8 @@ for l in lamb:
     for delay in delay_max:
         data10 = np.load(fig_dir + '/data_10_' + str(l) + '_' + str(delay) +
                          '_i' + str(INST) + '_n' + str(noise_rng[0]) + '-' +
-                         str(noise_rng[-1]) + '.npz')
+                         str(noise_rng[-1]) + '_neu' + str(num_neurons[0])
+                       + '-' + str(num_neurons[-1]) + '.npz')
         data10 = data10['acc']
 
         # Compute the mean accuracy across instances
@@ -287,11 +289,15 @@ if os.path.isdir(fig_dir) is False:
     plt.savefig(os.path.join(fig_dir, 'mean_ acc_noise_'
                              + str(l) + '_' + str(delay)
                              + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                             + '-' + str(noise_rng[-1]) + '.png'))
+                             + '-' + str(noise_rng[-1]) + '_neu'
+                             + str(num_neurons[0]) + '-'
+                             + str(num_neurons[-1]) + '.png'))
 else:
     plt.savefig(os.path.join(fig_dir, 'mean_acc_noise_'
                              + str(l) + '_' + str(delay)
                              + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                             + '-' + str(noise_rng[-1]) + '.png'))
+                             + '-' + str(noise_rng[-1]) + '_neu'
+                             + str(num_neurons[0]) + '-'
+                             + str(num_neurons[-1]) + '.png'))
 
 

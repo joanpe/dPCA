@@ -55,8 +55,8 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
         'max_n_epochs': 5000,
         'do_restart_run': False,
         'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
-        str(noise) + '/delay' + str(delay) + '/inst' + str(inst) + '/neurons' +
-        str(neuron),
+        str(noise) + '/delay' + str(delay) + '/neurons' +
+        str(neuron) + '/inst' + str(inst),
         'data_hps': {
             'n_batch': 2048,
             'n_time': 20,

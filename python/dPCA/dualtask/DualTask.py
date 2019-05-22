@@ -429,7 +429,7 @@ class DualTask(RecurrentWhisperer):
         data = self.generate_dualtask_trials()
 #        self.plot_trials(data)
 
-    def plot_trials(self, data, start_time=0, stop_time=None):
+    def plot_trials(self, data, acc_dpa, start_time=0, stop_time=None):
         '''Plots example trials, complete with input pulses, correct outputs,
         and RNN-predicted outputs.
 
@@ -471,8 +471,9 @@ class DualTask(RecurrentWhisperer):
             if n_plot == 1:
                 plt.title('Example trial', fontweight='bold')
             else:
-                plt.title('Example trial %d | Task %d' % (trial_idx + 1,
-                                                     task_type[trial_idx]),
+                plt.title('Example trial %d | Task %d | Acc %d' % (trial_idx + 1,
+                                                     task_type[trial_idx],
+                                                     self.acc_dpa[trial_dx]),
                           fontweight='bold')
 
             self._plot_single_trial(

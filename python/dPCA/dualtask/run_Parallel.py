@@ -99,7 +99,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
 
 
 # Train various RNNs with diferent noise
-for gng in gng_rng:
+#for gng in gng_rng:
 
     acc = []
     state = []

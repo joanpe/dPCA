@@ -30,8 +30,8 @@ import multiprocessing
 noise_rng = np.array([0.0])
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task.
-gng_rng = np.array([0, 10])
-lamb = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1])
+gng_rng = np.array(-1)
+lamb = np.array([0.0])
 delay_max = np.array([0])
 num_neurons = np.array([64])
 # number of RNN instances
@@ -84,7 +84,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
 #                                                     size=example_trials[
 #                                                             'inputs'].shape)
     
-    # Plot lasts 20 trials
+    # Plot lasts trials
     dt.plot_trials(example_trials)
     # Compute RNN predictions from example trials
     example_predictions = dt.predict(example_trials,

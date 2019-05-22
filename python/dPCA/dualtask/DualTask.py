@@ -13,6 +13,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import data
+import data3task
 from RecurrentWhisperer import RecurrentWhisperer
 
 
@@ -407,9 +408,13 @@ class DualTask(RecurrentWhisperer):
         delay_max = data_hps['delay_max']
         noise = data_hps['noise']
 
-        dataset = data.get_inputs_outputs(n_batch, n_time,
-                                          n_bits, gng_time, lamb, delay_max,
-                                          noise)
+        if gng_time==-1:
+            dataset = data3task.get_inputs_outputs(n_batch, n_time, n_bits,
+                                                   gng_time, lamb, delay_max,
+                                                   noise)
+        else:
+            dataset = data.get_inputs_outputs(n_batch, n_time, n_bits,
+                                              gng_time, lamb, delay_max, noise)
         return dataset
 
     def _setup_visualizations(self):
@@ -446,6 +451,7 @@ class DualTask(RecurrentWhisperer):
         n_plot = np.min([hps.n_trials_plot, n_batch])
 #        n_plot = 10
         dpa2_time = data['vec_tau']
+        task_type = data['task_choice']
 
         f = plt.figure(self.fig.number)
         plt.clf()
@@ -465,8 +471,8 @@ class DualTask(RecurrentWhisperer):
             if n_plot == 1:
                 plt.title('Example trial', fontweight='bold')
             else:
-                plt.title('Example trial %d | %d' % (trial_idx + 1,
-                                                     dpa2_time[trial_idx]),
+                plt.title('Example trial %d | Task %d' % (trial_idx + 1,
+                                                     task_type[trial_idx]),
                           fontweight='bold')
 
             self._plot_single_trial(
@@ -516,7 +522,7 @@ class DualTask(RecurrentWhisperer):
                 color='cyan')
 
             if bit_idx == 0:
-                # RNN outputs
+                # RNN outputsp
                 plt.step(
                     tt,
                     vertical_offset + pred_output_txd[:, 0],

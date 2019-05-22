@@ -30,8 +30,8 @@ import multiprocessing
 noise_rng = np.array([0.0])
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task.
-gng_rng = np.array([10])
-lamb = np.array([0.0])
+gng_rng = np.array([0, 10])
+lamb = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1])
 delay_max = np.array([0])
 num_neurons = np.array([64])
 # number of RNN instances

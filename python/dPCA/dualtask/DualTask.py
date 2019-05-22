@@ -233,7 +233,8 @@ class DualTask(RecurrentWhisperer):
                        self.grad_global_norm,
                        self.loss,
                        self.merged_opt_summary,
-                       self.acc_dpa]
+                       self.acc_dpa,
+                       self.acc_gng]
 
         feed_dict = dict()
         feed_dict[self.inputs_bxtxd] = batch_data['inputs']
@@ -244,7 +245,8 @@ class DualTask(RecurrentWhisperer):
          ev_grad_global_norm,
          ev_loss,
          ev_merged_opt_summary,
-         ev_acc_dpa] = self.session.run(ops_to_eval, feed_dict=feed_dict)
+         ev_acc_dpa,
+         ev_acc_gng] = self.session.run(ops_to_eval, feed_dict=feed_dict)
 
         if self.hps.do_save_tensorboard_events:
 
@@ -260,7 +262,7 @@ class DualTask(RecurrentWhisperer):
             self.writer.add_summary(ev_merged_opt_summary, self._step())
 
         summary = {'loss': ev_loss, 'grad_global_norm': ev_grad_global_norm,
-                   'acc_dpa': ev_acc_dpa}
+                   'acc_dpa': ev_acc_dpa, 'acc_gng': ev_acc_gng}
 
         return summary
 

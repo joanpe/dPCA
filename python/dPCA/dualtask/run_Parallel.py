@@ -29,7 +29,8 @@ import multiprocessing
 # Noise range for the input to the RNN
 noise_rng = np.array([0.0])
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
-# Time of appearence of the go- no go task. 0 for no task.
+# Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 
+# then it runs a ramdom trial either of the dualtask, dpa alone or gng alone.
 gng_rng = np.array([0, 10])
 #lamb = np.array([0.0])
 lamb = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1])
@@ -294,48 +295,39 @@ fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
 #                             + '-' + str(noise_rng[-1]) + '.png'))
 
 
-# Plots for noise against accuracy
-# Loading the data for task without distractor
-for l in lamb:
-    for delay in delay_max:
-        data = np.load(fig_dir + '/data_0_' + str(l) + '_' + str(delay) +
-                       '_i' + str(INST) + '_n' + str(noise_rng[0]) + '-' +
-                       str(noise_rng[-1]) + '_neu' + str(num_neurons[0])
-                       + '-' + str(num_neurons[-1]) + '.npz')
-        data = data['acc']
+# Plots for lambda against accuracy
+# Loading the data for both tasks
+datal = []
+mean_acc_dpa = []
+mean_acc_gng = []
+std_dpa = []
+std_gng =[]
+f = plt.figure()
+for gng in gng_rng:
+    for l in lamb:
+        for delay in delay_max:
+            data = np.load(fig_dir + '/data_' + str(gng) + '_' + str(l) + '_'
+                           + str(delay) + '_i' + str(INST) + '_n'
+                           + str(noise_rng[0]) + '-' + str(noise_rng[-1])
+                           + '_neu' + str(num_neurons[0])
+                           + '-' + str(num_neurons[-1]) + '.npz')
+            datal.append(data['acc'])
+            
+            # Compute the mean accuracy across instances
         
-        # Compute the mean accuracy across instances
-        mean_acc = []
-        std = []
-        for n in range(noise_rng.shape[0]):
-            mean_acc.append(np.mean(data[n][1]))
-            std.append(np.std(data[n][1]))
-        # Plot with error bars of the accuracy / loss
-        plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
-                     label='DPA accuracy dpa gng0 lamb' + str(l))
+            mean_acc_dpa.append(np.mean(datal[0][1]))
+            std_dpa.append(np.std(datal[0][1]))
+            mean_acc_gng.append(np.mean(datal[0][2]))
+            std_gng.append(np.std(datal[0][2]))
 
-# Loading data for task with distractor
-for l in lamb:
-    for delay in delay_max:
-        data10 = np.load(fig_dir + '/data_10_' + str(l) + '_' + str(delay) +
-                         '_i' + str(INST) + '_n' + str(noise_rng[0]) + '-' +
-                         str(noise_rng[-1]) + '_neu' + str(num_neurons[0])
-                       + '-' + str(num_neurons[-1]) + '.npz')
-        data10 = data10['acc']
+# Plot with error bars of the accuracy / loss
+    plt.errorbar(lamb, mean_acc_dpa, yerr=std_dpa, marker='+',
+                 label='DPA with gng' + str(gng))
+    if gng != 0:
+        plt.errorbar(lamb, mean_acc_gng, yerr=std_gng, marker='+',
+                     label='GNG with gng' + str(gng))
 
-        # Compute the mean accuracy across instances
-        mean_acc = []
-        std = []
-        for n in range(noise_rng.shape[0]):
-            mean_acc.append(np.mean(data10[n][1]))
-            std.append(np.std(data10[n][1]))
-
-        # Plot with error bars of the accuracy / loss
-        plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
-                     label='DPA accuracy dpa gng10' + str(l))
-
-
-plt.xlabel('Noise')
+plt.xlabel('Parametrization')
 plt.ylabel('Mean accuracy')
 plt.legend()
 plt.show()
@@ -356,4 +348,51 @@ else:
                              + str(num_neurons[0]) + '-'
                              + str(num_neurons[-1]) + '.png'))
 
-
+#
+## Plots for noise against accuracy
+## Loading data for both tasks
+#f = plt.figure()
+#for gng in gng_rng:
+#    for l in lamb:
+#        for delay in delay_max:
+#            data10 = np.load(fig_dir + '/data_' + str(gng) + '_' + str(l)
+#                            + '_' + str(delay) + '_i' + str(INST) + '_n'
+#                            + str(noise_rng[0]) + '-' +
+#                             str(noise_rng[-1]) + '_neu' + str(num_neurons[0])
+#                           + '-' + str(num_neurons[-1]) + '.npz')
+#            data10 = data10['acc']
+#        
+#            # Compute the mean accuracy across instances
+#            mean_acc = []
+#            std = []
+#            for n in range(noise_rng.shape[0]):
+#                mean_acc.append(np.mean(data10[n][1]))
+#                std.append(np.std(data10[n][1]))
+#        
+#            # Plot with error bars of the accuracy / loss
+#            plt.errorbar(noise_rng, mean_acc, yerr=std, marker='+',
+#                         label='DPA accuracy dpa gng' + str(l))
+#
+#
+#plt.xlabel('Noise')
+#plt.ylabel('Mean accuracy')
+#plt.legend()
+#plt.show()
+#
+#if os.path.isdir(fig_dir) is False:
+#    os.mkdir(fig_dir)
+#    plt.savefig(os.path.join(fig_dir, 'mean_ acc_noise_'
+#                             + str(l) + '_' + str(delay)
+#                             + '_i' + str(INST) + '_n' + str(noise_rng[0])
+#                             + '-' + str(noise_rng[-1]) + '_neu'
+#                             + str(num_neurons[0]) + '-'
+#                             + str(num_neurons[-1]) + '.png'))
+#else:
+#    plt.savefig(os.path.join(fig_dir, 'mean_acc_noise_'
+#                             + str(l) + '_' + str(delay)
+#                             + '_i' + str(INST) + '_n' + str(noise_rng[0])
+#                             + '-' + str(noise_rng[-1]) + '_neu'
+#                             + str(num_neurons[0]) + '-'
+#                             + str(num_neurons[-1]) + '.png'))
+#
+#

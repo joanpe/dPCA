@@ -26,27 +26,32 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
                                             mat_conv=[0, 1])
         elif task_choice[ind_btch]==1:
             # Get trial for DPA
-            inp, out, conf, tau = dpa(n_time, n_bits, gng_time,
-                                            lamb=0, delay_max=0, noise=0,
-                                            mat_conv=[0, 1])
+            inp, out, conf, tau = dpa(n_time, n_bits, gng_time, lamb=0,
+                                      delay_max=0, noise=0, mat_conv=[0, 1])
         else:
             # Get trial for DPA
-            inp, out, conf, tau = gng(n_time, n_bits, gng_time,
-                                            lamb=0, delay_max=0, noise=0,
-                                            mat_conv=[0, 1])
-        
+            inp, out, conf, tau = gng(n_time, n_bits, gng_time, lamb=0,
+                                      delay_max=0, noise=0, mat_conv=[0, 1])
+
         # Add together all trials in a batch
-        inputs.append(inp, axis=0)
-        outputs.append(out, axis=0)
-        stim_conf.append(conf, axis=0)
-        vec_tau.append(tau, axis=0)
+        inputs.append(inp)
+        outputs.append(out)
+        stim_conf.append(conf)
+        vec_tau.append(tau)
+        
+    inputs = np.array(inputs)
+    outputs = np.array(outputs)
+    stim_conf = np.array(stim_conf)
+    stim_conf.reshape(n_batch, 4)
+    vec_tau = np.array(vec_tau)
+    vec_tau.reshape(n_batch, 1)
 
     return {'inputs': inputs, 'output': outputs, 'task_choice': task_choice,
             'stim_conf': stim_conf, 'vec_tau': vec_tau}
 
 # Dual Task stimulus structure
-def dual_task(n_time, n_bits, gng_time, lamb=0,
-                       delay_max=0, noise=0, mat_conv=[0, 1]):
+def dual_task(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
+              mat_conv=[0, 1]):
     # inputs mat
     inputs = np.zeros([n_time, n_bits])
     # build dpa structure
@@ -68,6 +73,7 @@ def dual_task(n_time, n_bits, gng_time, lamb=0,
     # and gng_time + 2 + delay_max. tau in range[0,9]
     if delay_max == 0:
         inputs[n_time-5, stim2_seq] = 1
+        tau = 0
     else:
         # tau= time at which dpa2 appears
         tau = np.random.choice(delay_max, size=1)+gng_time+2
@@ -94,14 +100,14 @@ def dual_task(n_time, n_bits, gng_time, lamb=0,
     inputs += np.random.normal(scale=noise, size=inputs.shape)
 
     # stim configuration
-    stim_conf = np.concatenate((choice1, choice2, gt_gng,
-                                gt_dpa), axis=1)
+    stim_conf = np.array([choice1, choice2, gt_gng,
+                                gt_dpa])
 
     return inputs, outputs, stim_conf, tau
 
 # DPA task stimulus structure
-def dpa(n_time, n_bits, gng_time, lamb=0,
-                       delay_max=0, noise=0, mat_conv=[0, 1]):
+def dpa(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
+        mat_conv=[0, 1]):
     gt_gng = 2
     # inputs mat
     inputs = np.zeros([n_time, n_bits])
@@ -120,6 +126,7 @@ def dpa(n_time, n_bits, gng_time, lamb=0,
     # and gng_time + 2 + delay_max. tau in range[0,9]
     if delay_max == 0:
         inputs[n_time-5, stim2_seq] = 1
+        tau = 0
     else:
         # tau= time at which dpa2 appears
         tau = np.random.choice(delay_max, size=1)+gng_time+2
@@ -138,14 +145,14 @@ def dpa(n_time, n_bits, gng_time, lamb=0,
     inputs += np.random.normal(scale=noise, size=inputs.shape)
 
     # stim configuration
-    stim_conf = np.concatenate((choice1, choice2, gt_gng,
-                                gt_dpa), axis=1)
+    stim_conf = np.array([choice1, choice2, gt_gng,
+                                gt_dpa])
 
-    return {inputs, outputs, stim_conf, tau}
+    return inputs, outputs, stim_conf, tau
 
 # Go no Go task stimulus structure
-def gng(n_batch, n_time, n_bits, gng_time, lamb=0,
-                       delay_max=0, noise=0, mat_conv=[0, 1]):
+def gng(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
+        mat_conv=[0, 1]):
     gt_dpa = 2
     choice1, choice2 = 0, 0
     # inputs mat
@@ -174,16 +181,15 @@ def gng(n_batch, n_time, n_bits, gng_time, lamb=0,
     tau = 0
 
     # stim configuration
-    stim_conf = np.concatenate((choice1, choice2, gt_gng,
-                                gt_dpa), axis=1)
+    stim_conf = np.array([choice1, choice2, gt_gng,
+                                gt_dpa])
 
-    return {inputs, outputs, stim_conf, tau}
+    return inputs, outputs, stim_conf, tau
 
 def get_stims(stim, n_batch):
-    choice = np.random.choice(stim.shape[0], size=(n_batch, ))
+    choice = np.random.choice(stim.shape[0])
 #    choice = np.concatenate((np.zeros(int(n_batch/2,)),
 #                             np.ones(int(n_batch/2,)))).astype(int)
-    np.random.shuffle(choice)
     stim_seq = stim[choice].astype(int)
     return stim_seq, choice
 

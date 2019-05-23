@@ -35,7 +35,7 @@ lamb = np.array([0.0])
 delay_max = np.array([0])
 num_neurons = np.array([64])
 # number of RNN instances
-INST = 20
+INST = 1
 
 
 def trainDualTask(noise, gng, inst, lamb, delay, neuron):
@@ -78,11 +78,6 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     example_trials = dt.generate_dualtask_trials()
 
     is_lstm = dt.hps.rnn_type == 'lstm'
-
-    # Adding noise to the inputs (done in data.py)
-#        example_trials['inputs'] += np.random.normal(scale=noise,
-#                                                     size=example_trials[
-#                                                             'inputs'].shape)
     
     # Compute RNN predictions from example trials
     example_predictions = dt.predict(example_trials,
@@ -92,85 +87,165 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     acc_dpa = example_predictions['ev_acc_dpa']
     acc_gng = example_predictions['ev_acc_gng']
     state = example_predictions['state']
+    task_type = example_trials['task_choice']
     
     # Plot example trials
-#    dt.plot_trials(example_trials, acc_dpa)
-    return [acc_dpa, acc_gng, state]
+    dt.plot_trials(example_trials, acc_dpa)
+    return [acc_dpa, acc_gng, state, task_type]
 
-
-# Train various RNNs with diferent noise
-#for gng in gng_rng:
-
-acc = []
-state = []
-#f = plt.figure()
-plt.clf()
-
-for l in  lamb:
+if gng_rng==-1:
+    # Train various RNNs with diferent noise
+    #for gng in gng_rng:
+    gng = gng_rng
+    acc = []
+    state = []
+    f = plt.figure()
+    plt.clf()
     
-    for delay in delay_max:
-
-        for noise in noise_rng:
+    for l in  lamb:
+        
+        for delay in delay_max:
     
-            for neuron in num_neurons:
-                numcores = multiprocessing.cpu_count()
-                ops = Parallel(n_jobs=numcores)(delayed(
-                        trainDualTask)(noise, gng, inst, l, delay,
-                                     neuron) for inst in range(INST))
-                
-                # Save data in a list
-                NOISE = np.repeat(noise, INST)
-                acc_dpa = []
-                acc_gng = []
-                for i in range(INST):
-                    acc_dpa.append(ops[i][0])
-                    acc_gng.append(ops[i][1])
-                    state.append([noise, ops[i][2]])
-                acc.append([noise, acc_dpa, acc_gng])
-                # Plot loss / accuracy for the different noise- instances
-#                plt.figure(f.number)
-        #        plt.plot(noise, loss_dpa, '+')
-        #        plt.plot(noise, loss_gng, 'v')
-                plt.plot(NOISE, acc_dpa, '+', color='k')
-#                    plt.plot(NOISE, acc_gng, 'v', color='k')
-                plt.xlabel('Num neurons')
-                plt.ylabel('Accuracy')
-                plt.ion()
-                plt.draw()
-                plt.show()
-                plt.pause(0.01)
+            for noise in noise_rng:
+        
+                for neuron in num_neurons:
+                    numcores = multiprocessing.cpu_count()
+                    ops = Parallel(n_jobs=numcores)(delayed(
+                            trainDualTask)(noise, gng, inst, l, delay,
+                                         neuron) for inst in range(INST))
+                    
+                    # Save data in a list
+                    NOISE = np.repeat(noise, INST)
+                    acc_dpa = []
+                    acc_gng = []
+                    task_type = []
+                    for i in range(INST):
+                        acc_dpa.append(ops[i][0])
+                        acc_gng.append(ops[i][1])
+                        state.append([noise, ops[i][2]])
+                        task_type.append(ops[i][3])
 
-    # save data and figure
-        data = {'acc': acc, 'state': state}
+                    acc.append([noise, acc_dpa, acc_gng])
+                    # Plot loss / accuracy for the different noise- instances
+                    plt.figure(f.number)
+            #        plt.plot(noise, loss_dpa, '+')
+            #        plt.plot(noise, loss_gng, 'v')==0:
+                    plt.plot(NOISE, acc_dpa, '+', color='k')
+                    plt.plot(NOISE, acc_gng, 'v', color='k')
+                    plt.xlabel('Num neurons')
+                    plt.ylabel('Accuracy')
+                    plt.ion()
+                    plt.draw()
+                    plt.show()
+                    plt.pause(0.01)
     
-        fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
-        if os.path.isdir(fig_dir) is False:
-            os.mkdir(fig_dir)
-            np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
-                                  + str(l) + '_' + str(delay)
-                                  + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                  + '-' + str(noise_rng[-1])
-                                  + '_neu' + str(num_neurons[0])
-                                  + '-' + str(num_neurons[-1])), **data)
-            plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
-                                     + str(l) + '_' + str(delay)
-                                     + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                     + '-' + str(noise_rng[-1])
-                                     + '_neu' + str(num_neurons[0])
-                                     + '-' + str(num_neurons[-1]) + '.png'))
-        else:
-            np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
-                                  + str(l) + '_' + str(delay)
-                                  + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                  + '-' + str(noise_rng[-1])
-                                  + '_neu' + str(num_neurons[0])
-                                  + '-' + str(num_neurons[-1])), **data)
-            plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
-                                     + str(l) + '_' + str(delay)
-                                     + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                     + '-' + str(noise_rng[-1])
-                                     + '_neu' + str(num_neurons[0])
-                                     + '-' + str(num_neurons[-1]) + '.png'))
+        # save data and figure
+            data = {'acc': acc, 'state': state}
+        
+            fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
+            if os.path.isdir(fig_dir) is False:
+                os.mkdir(fig_dir)
+                np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
+                                      + str(l) + '_' + str(delay)
+                                      + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                      + '-' + str(noise_rng[-1])
+                                      + '_neu' + str(num_neurons[0])
+                                      + '-' + str(num_neurons[-1])), **data)
+                plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
+                                         + str(l) + '_' + str(delay)
+                                         + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                         + '-' + str(noise_rng[-1])
+                                         + '_neu' + str(num_neurons[0])
+                                         + '-' + str(num_neurons[-1]) + '.png'))
+            else:
+                np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
+                                      + str(l) + '_' + str(delay)
+                                      + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                      + '-' + str(noise_rng[-1])
+                                      + '_neu' + str(num_neurons[0])
+                                      + '-' + str(num_neurons[-1])), **data)
+                plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
+                                         + str(l) + '_' + str(delay)
+                                         + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                         + '-' + str(noise_rng[-1])
+                                         + '_neu' + str(num_neurons[0])
+                                         + '-' + str(num_neurons[-1]) + '.png'))
+
+else:
+    # Train various RNNs with diferent noise
+    for gng in gng_rng:
+        acc = []
+        state = []
+        f = plt.figure()
+        plt.clf()
+        
+        for l in  lamb:
+            
+            for delay in delay_max:
+        
+                for noise in noise_rng:
+            
+                    for neuron in num_neurons:
+                        numcores = multiprocessing.cpu_count()
+                        ops = Parallel(n_jobs=numcores)(delayed(
+                                trainDualTask)(noise, gng, inst, l, delay,
+                                             neuron) for inst in range(INST))
+                        
+                        # Save data in a list
+                        NOISE = np.repeat(noise, INST)
+                        acc_dpa = []
+                        acc_gng = []
+                        task_type = []
+                        for i in range(INST):
+                            acc_dpa.append(ops[i][0])
+                            acc_gng.append(ops[i][1])
+                            state.append([noise, ops[i][2]])
+                                    
+                        acc.append([noise, acc_dpa, acc_gng])
+                        # Plot loss / accuracy for the different noise- instances
+                        plt.figure(f.number)
+                #        plt.plot(noise, loss_dpa, '+')
+                #        plt.plot(noise, loss_gng, 'v')
+                        plt.plot(NOISE, acc_dpa, '+', color='k')
+#                                plt.plot(NOISE, acc_gng, 'v', color='k')
+                        plt.xlabel('Num neurons')
+                        plt.ylabel('Accuracy')
+                        plt.ion()
+                        plt.draw()
+                        plt.show()
+                        plt.pause(0.01)
+        
+            # save data and figure
+                data = {'acc': acc, 'state': state}
+            
+                fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
+                if os.path.isdir(fig_dir) is False:
+                    os.mkdir(fig_dir)
+                    np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
+                                          + str(l) + '_' + str(delay)
+                                          + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                          + '-' + str(noise_rng[-1])
+                                          + '_neu' + str(num_neurons[0])
+                                          + '-' + str(num_neurons[-1])), **data)
+                    plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
+                                             + str(l) + '_' + str(delay)
+                                             + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                             + '-' + str(noise_rng[-1])
+                                             + '_neu' + str(num_neurons[0])
+                                             + '-' + str(num_neurons[-1]) + '.png'))
+                else:
+                    np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
+                                          + str(l) + '_' + str(delay)
+                                          + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                          + '-' + str(noise_rng[-1])
+                                          + '_neu' + str(num_neurons[0])
+                                          + '-' + str(num_neurons[-1])), **data)
+                    plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
+                                             + str(l) + '_' + str(delay)
+                                             + '_i' + str(INST) + '_n' + str(noise_rng[0])
+                                             + '-' + str(noise_rng[-1])
+                                             + '_neu' + str(num_neurons[0])
+                                             + '-' + str(num_neurons[-1]) + '.png'))
 
 
 fig_dir = os.path.join(PATH, 'data_trainedwithnoise')

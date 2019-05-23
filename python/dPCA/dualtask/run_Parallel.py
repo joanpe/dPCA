@@ -94,7 +94,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     state = example_predictions['state']
     
     # Plot example trials
-    dt.plot_trials(example_trials, acc_dpa)
+#    dt.plot_trials(example_trials, acc_dpa)
     return [acc_dpa, acc_gng, state]
 
 
@@ -103,7 +103,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
 
 acc = []
 state = []
-f = plt.figure()
+#f = plt.figure()
 plt.clf()
 
 for l in  lamb:
@@ -128,7 +128,7 @@ for l in  lamb:
                     state.append([noise, ops[i][2]])
                 acc.append([noise, acc_dpa, acc_gng])
                 # Plot loss / accuracy for the different noise- instances
-                plt.figure(f.number)
+#                plt.figure(f.number)
         #        plt.plot(noise, loss_dpa, '+')
         #        plt.plot(noise, loss_gng, 'v')
                 plt.plot(NOISE, acc_dpa, '+', color='k')

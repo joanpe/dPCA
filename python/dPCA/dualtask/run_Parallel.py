@@ -94,7 +94,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
         task_type = 0
     
     # Plot example trials
-    dt.plot_trials(example_trials, acc_dpa)
+    dt.plot_trials(example_trials)
     return [acc_dpa, acc_gng, state, task_type]
 
 if gng_rng[0]==-1:
@@ -119,32 +119,20 @@ if gng_rng[0]==-1:
                                          neuron) for inst in range(INST))
                     
                     # Save data in a list
-                    NOISE = np.repeat(noise, INST)
                     acc_dpa = []
                     acc_gng = []
-                    task_type = []
+                    task = []
                     for i in range(INST):
                         acc_dpa.append(ops[i][0])
                         acc_gng.append(ops[i][1])
                         state.append([noise, ops[i][2]])
-                        task_type.append(ops[i][3])
-
+                        task.append(ops[i][3])
+                        
                     acc.append([noise, acc_dpa, acc_gng])
-                    # Plot loss / accuracy for the different noise- instances
-                    plt.figure(f.number)
-            #        plt.plot(noise, loss_dpa, '+')
-            #        plt.plot(noise, loss_gng, 'v')==0:
-                    plt.plot(NOISE, acc_dpa, '+', color='k')
-                    plt.plot(NOISE, acc_gng, 'v', color='k')
-                    plt.xlabel('Num neurons')
-                    plt.ylabel('Accuracy')
-                    plt.ion()
-                    plt.draw()
-                    plt.show()
-                    plt.pause(0.01)
+                  
     
         # save data and figure
-            data = {'acc': acc, 'state': state}
+            data = {'acc': acc, 'state': state, 'task': task}
         
             fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
             if os.path.isdir(fig_dir) is False:
@@ -155,12 +143,6 @@ if gng_rng[0]==-1:
                                       + '-' + str(noise_rng[-1])
                                       + '_neu' + str(num_neurons[0])
                                       + '-' + str(num_neurons[-1])), **data)
-                plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
-                                         + str(l) + '_' + str(delay)
-                                         + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                         + '-' + str(noise_rng[-1])
-                                         + '_neu' + str(num_neurons[0])
-                                         + '-' + str(num_neurons[-1]) + '.png'))
             else:
                 np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
                                       + str(l) + '_' + str(delay)
@@ -168,12 +150,6 @@ if gng_rng[0]==-1:
                                       + '-' + str(noise_rng[-1])
                                       + '_neu' + str(num_neurons[0])
                                       + '-' + str(num_neurons[-1])), **data)
-                plt.savefig(os.path.join(fig_dir, 'acc_noise_' + str(gng) + '_'
-                                         + str(l) + '_' + str(delay)
-                                         + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                         + '-' + str(noise_rng[-1])
-                                         + '_neu' + str(num_neurons[0])
-                                         + '-' + str(num_neurons[-1]) + '.png'))
 
 else:
     # Train various RNNs with diferent noise

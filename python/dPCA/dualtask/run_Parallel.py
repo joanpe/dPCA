@@ -30,12 +30,13 @@ import multiprocessing
 noise_rng = np.array([0.0])
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task.
-gng_rng = np.array(-1)
-lamb = np.array([0.0])
+gng_rng = np.array([0, 10])
+#lamb = np.array([0.0])
+lamb = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1])
 delay_max = np.array([0])
 num_neurons = np.array([64])
 # number of RNN instances
-INST = 1
+INST = 20
 
 
 def trainDualTask(noise, gng, inst, lamb, delay, neuron):
@@ -87,13 +88,16 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     acc_dpa = example_predictions['ev_acc_dpa']
     acc_gng = example_predictions['ev_acc_gng']
     state = example_predictions['state']
-    task_type = example_trials['task_choice']
+    if gng==-1:
+        task_type = example_trials['task_choice']
+    else:
+        task_type = 0
     
     # Plot example trials
     dt.plot_trials(example_trials, acc_dpa)
     return [acc_dpa, acc_gng, state, task_type]
 
-if gng_rng==-1:
+if gng_rng[0]==-1:
     # Train various RNNs with diferent noise
     #for gng in gng_rng:
     gng = gng_rng

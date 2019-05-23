@@ -448,10 +448,14 @@ class DualTask(RecurrentWhisperer):
         hps = self.hps
         n_batch = self.hps.data_hps['n_batch']
         n_time = self.hps.data_hps['n_time']
+        gng_time = self.hps.data_hps['gng_time']
         n_plot = np.min([hps.n_trials_plot, n_batch])
 #        n_plot = 10
         dpa2_time = data['vec_tau']
-        task_type = data['task_choice']
+        if gng_time==-1:
+            task_type = data['task_choice']
+        else:
+            task_type = 0
 
         f = plt.figure(self.fig.number)
         plt.clf()
@@ -460,6 +464,7 @@ class DualTask(RecurrentWhisperer):
         output = data['output']
         predictions = self.predict(data)
         pred_output = predictions['output']
+        acc_dpa = predictions['ev_acc_dpa']
 
         if stop_time is None:
             stop_time = n_time
@@ -471,10 +476,15 @@ class DualTask(RecurrentWhisperer):
             if n_plot == 1:
                 plt.title('Example trial', fontweight='bold')
             else:
-                plt.title('Example trial %d | Task %d | Acc %d' % (trial_idx + 1,
+                if gng_time==-1:
+                    plt.title('Example trial %d | Task %d | Acc %d' % (trial_idx + 1,
                                                      task_type[trial_idx],
-                                                     self.acc_dpa[trial_dx]),
-                          fontweight='bold')
+                                                     acc_dpa),
+                                  fontweight='bold')
+                else:
+                    plt.title('Example trial %d | Acc %d' % (trial_idx + 1,
+                                                             acc_dpa),
+                                fontweight='bold')
 
             self._plot_single_trial(
                 inputs[trial_idx, time_idx, :],

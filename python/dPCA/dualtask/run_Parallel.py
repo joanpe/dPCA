@@ -95,9 +95,9 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
         task_type = 0
     
     # Plot example trials
-    dt.plot_trials(example_trials)
+#    dt.plot_trials(example_trials)
     return [acc_dpa, acc_gng, state, task_type]
-
+# Condition for which we assign 1 different task of 3 in each trial
 if gng_rng[0]==-1:
     # Train various RNNs with diferent noise
     #for gng in gng_rng:
@@ -152,6 +152,7 @@ if gng_rng[0]==-1:
                                       + '_neu' + str(num_neurons[0])
                                       + '-' + str(num_neurons[-1])), **data)
 
+# DPA + GNG task
 else:
     # Train various RNNs with diferent noise
     for gng in gng_rng:
@@ -173,7 +174,7 @@ else:
                                              neuron) for inst in range(INST))
                         
                         # Save data in a list
-                        NOISE = np.repeat(noise, INST)
+                        NOISE = np.repeat(l, INST)
                         acc_dpa = []
                         acc_gng = []
                         task_type = []
@@ -297,12 +298,15 @@ fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
 
 # Plots for lambda against accuracy
 # Loading the data for both tasks
-datal = []
-mean_acc_dpa = []
-mean_acc_gng = []
-std_dpa = []
-std_gng =[]
 f = plt.figure()
+mean_acc_dpa0 = []
+mean_acc_gng0 = []
+std_dpa0 = []
+std_gng0 =[]
+mean_acc_dpa10 = []
+mean_acc_gng10 = []
+std_dpa10 = []
+std_gng10 =[]
 for gng in gng_rng:
     for l in lamb:
         for delay in delay_max:
@@ -311,21 +315,30 @@ for gng in gng_rng:
                            + str(noise_rng[0]) + '-' + str(noise_rng[-1])
                            + '_neu' + str(num_neurons[0])
                            + '-' + str(num_neurons[-1]) + '.npz')
-            datal.append(data['acc'])
+            datal = data['acc'][0]
+#            datal.append(data['acc'])
             
             # Compute the mean accuracy across instances
-        
-            mean_acc_dpa.append(np.mean(datal[0][1]))
-            std_dpa.append(np.std(datal[0][1]))
-            mean_acc_gng.append(np.mean(datal[0][2]))
-            std_gng.append(np.std(datal[0][2]))
+        if gng > 0:
+            mean_acc_dpa10.append(np.mean(datal[1]))
+            std_dpa10.append(np.std(datal[1]))
+            mean_acc_gng10.append(np.mean(datal[2]))
+            std_gng10.append(np.std(datal[2]))
+        else:
+            mean_acc_dpa0.append(np.mean(datal[1]))
+            std_dpa0.append(np.std(datal[1]))
+            mean_acc_gng0.append(np.mean(datal[2]))
+            std_gng0.append(np.std(datal[2]))
 
 # Plot with error bars of the accuracy / loss
-    plt.errorbar(lamb, mean_acc_dpa, yerr=std_dpa, marker='+',
-                 label='DPA with gng' + str(gng))
-    if gng != 0:
-        plt.errorbar(lamb, mean_acc_gng, yerr=std_gng, marker='+',
-                     label='GNG with gng' + str(gng))
+#        plt.errorbar(l, mean_acc_dpa, yerr=std_dpa, marker='+',
+#                     label='DPA with gng' + str(gng))
+plt.scatter(lamb, mean_acc_dpa10, color='r')
+#        plt.errorbar(l, mean_acc_gng, yerr=std_gng, marker='+',
+#                     label='GNG with gng' + str(gng))
+plt.scatter(lamb, mean_acc_dpa0, color='g')
+
+plt.scatter(lamb, mean_acc_gng10, color='b')
 
 plt.xlabel('Parametrization')
 plt.ylabel('Mean accuracy')

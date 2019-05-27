@@ -38,7 +38,7 @@ lamb = np.array([0.0])
 delay_max = np.array([0])
 num_neurons = np.array([64])
 # number of RNN instances
-INST = 1
+INST = 10
 
 
 def trainDualTask(noise, gng, inst, lamb, delay, neuron):
@@ -56,7 +56,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
         'min_loss': 1e-6,  # 1e-4
         'min_learning_rate': 1e-5,
         'max_n_epochs': 5000,
-        'do_restart_run': False,
+        'do_restart_run': True,
         'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
         str(noise) + '/delay' + str(delay) + '/neurons' +
         str(neuron) + '/inst' + str(inst),
@@ -95,64 +95,65 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     else:
         task_type = 0
     
+    
     # Plot example trials
 #    dt.plot_trials(example_trials)
     return [acc_dpa, acc_gng, state, task_type]
 
 # Condition for which we assign 1 different task of 3 in each trial
-if gng_rng[0]==-1:
-    # Train various RNNs with diferent noise
-    #for gng in gng_rng:
-    gng = gng_rng
-    acc = []
-    state = []
-    f = plt.figure()
-    plt.clf()
-    
-    for l in  lamb:
-        
-        for delay in delay_max:
-    
-            for noise in noise_rng:
-        
-                for neuron in num_neurons:
-                    numcores = multiprocessing.cpu_count()
-                    ops = Parallel(n_jobs=numcores)(delayed(
-                            trainDualTask)(noise, gng, inst, l, delay,
-                                         neuron) for inst in range(INST))
-                    
-                    # Save data in a list
-                    acc_dpa = []
-                    acc_gng = []
-                    task = []
-                    for i in range(INST):
-                        acc_dpa.append(ops[i][0])
-                        acc_gng.append(ops[i][1])
-                        state.append([noise, ops[i][2]])
-                        task.append(ops[i][3])
-                        
-                    acc.append([noise, acc_dpa, acc_gng])
-                  
-    
-        # save data and figure
-            data = {'acc': acc, 'state': state, 'task': task}
-        
-            fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
-            if os.path.isdir(fig_dir) is False:
-                os.mkdir(fig_dir)
-                np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
-                                      + str(l) + '_' + str(delay)
-                                      + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                      + '-' + str(noise_rng[-1])
-                                      + '_neu' + str(num_neurons[0])
-                                      + '-' + str(num_neurons[-1])), **data)
-            else:
-                np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
-                                      + str(l) + '_' + str(delay)
-                                      + '_i' + str(INST) + '_n' + str(noise_rng[0])
-                                      + '-' + str(noise_rng[-1])
-                                      + '_neu' + str(num_neurons[0])
-                                      + '-' + str(num_neurons[-1])), **data)
+#if gng_rng[0]==-1:
+#    # Train various RNNs with diferent noise
+#    #for gng in gng_rng:
+#    gng = gng_rng
+#    acc = []
+#    state = []
+#    f = plt.figure()
+#    plt.clf()
+#    
+#    for l in  lamb:
+#        
+#        for delay in delay_max:
+#    
+#            for noise in noise_rng:
+#        
+#                for neuron in num_neurons:
+#                    numcores = multiprocessing.cpu_count()
+#                    ops = Parallel(n_jobs=numcores)(delayed(
+#                            trainDualTask)(noise, gng, inst, l, delay,
+#                                         neuron) for inst in range(INST))
+#                    
+#                    # Save data in a list
+#                    acc_dpa = []
+#                    acc_gng = []
+#                    task = []
+#                    for i in range(INST):
+#                        acc_dpa.append(ops[i][0])
+#                        acc_gng.append(ops[i][1])
+#                        state.append([noise, ops[i][2]])
+#                        task.append(ops[i][3])
+#                        
+#                    acc.append([noise, acc_dpa, acc_gng])
+#                  
+#    
+#        # save data and figure
+#            data = {'acc': acc, 'state': state, 'task': task}
+#        
+#            fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
+#            if os.path.isdir(fig_dir) is False:
+#                os.mkdir(fig_dir)
+#                np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
+#                                      + str(l) + '_' + str(delay)
+#                                      + '_i' + str(INST) + '_n' + str(noise_rng[0])
+#                                      + '-' + str(noise_rng[-1])
+#                                      + '_neu' + str(num_neurons[0])
+#                                      + '-' + str(num_neurons[-1])), **data)
+#            else:
+#                np.savez(os.path.join(fig_dir, 'data_' + str(gng) + '_'
+#                                      + str(l) + '_' + str(delay)
+#                                      + '_i' + str(INST) + '_n' + str(noise_rng[0])
+#                                      + '-' + str(noise_rng[-1])
+#                                      + '_neu' + str(num_neurons[0])
+#                                      + '-' + str(num_neurons[-1])), **data)
 #
 ## Runs DPA + GNG task
 #else:
@@ -426,28 +427,78 @@ acc_dpa_dual = data['acc']
 
 #Accuracy across training
 
-data = np.load(PATH + '/logs_[-1]/lamb0.0/noise0.0/delay0/neurons64/inst0/fbe1d622d8/accuracies.npz')
-acc_dpa = data['acc_dpa']
-acc_gng = data['acc_gng']
-acc_dpa_dual = data['acc_dpa_dual']
-acc_gng_dual = data['acc_gng_dual']
-acc_dpa_dpa = data['acc_dpa_dpa']
-acc_gng_dpa = data['acc_gng_dpa']
-acc_dpa_gng = data['acc_dpa_gng']
-acc_gng_gng = data['acc_gng_gng']
-task = data['task']
-n_epochs = data['n_epochs']
+plt.figure()
+for i in range(INST):
+    data = np.load(PATH + '/logs_[-1]/lamb0.0/noise0.0/delay0/neurons64/inst' + str(i) + '/fbe1d622d8/accuracies.npz')
+    acc_dpa = data['acc_dpa']
+    acc_gng = data['acc_gng']
+    acc_dpa_dual = data['acc_dpa_dual']
+    acc_gng_dual = data['acc_gng_dual']
+    acc_dpa_dpa = data['acc_dpa_dpa']
+    acc_gng_gng = data['acc_gng_gng']
+    n_epochs = data['n_epochs']
+    
+    epochs = np.arange(n_epochs//10)
+    
+    plt.plot(epochs, acc_dpa_dual, label='Dual DPA', color='r')
+    plt.plot(epochs, acc_gng_dual, label='Dual GNG', color='b')
+    plt.plot(epochs, acc_dpa_dpa, label='DPA DPA', color='g')
+    plt.plot(epochs, acc_gng_gng, label='GNG GNG', color='cyan')
 
-epochs = np.arange(n_epochs)
+#plt.xlim([0, 100])
+plt.legend()
+plt.show()
 
+fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
+np.savefig(os.path.join(fig_dir, 'acc_across_train.png'))
+    
+    
+    
+acc_dpa_dual = []
+acc_gng_dual = []
+acc_dpa_dpa = []
+acc_gng_gng = []
+n_epochs = []
+
+for i in range(INST):
+    data = np.load(PATH + '/logs_[-1]/lamb0.0/noise0.0/delay0/neurons64/inst'
+                   + str(i) + '/fbe1d622d8/accuracies.npz')
+    acc = data['acc_dpa_dual']
+    acc_dpa_dual.append(acc)
+    acc = data['acc_gng_dual']
+    acc_gng_dual.append(acc)
+    acc = data['acc_dpa_dpa']
+    acc_dpa_dpa.append(acc)
+    acc = data['acc_gng_gng']
+    acc_gng_gng.append(acc)
+    n = data['n_epochs']
+    n_epochs.append(n)
+
+min_epochs = np.min(tuple(n_epochs[i] for i in range(INST)))//10
+acc_dpa_dualstack = acc_dpa_dual[0][0:min_epochs]
+acc_gng_dualstack = acc_gng_dual[0][0:min_epochs]
+acc_dpa_dpastack = acc_dpa_dpa[0][0:min_epochs]
+acc_gng_gngstack = acc_gng_gng[0][0:min_epochs]
+for i in range(INST-1):
+    acc_dpa_dualstack = np.column_stack((acc_dpa_dualstack, acc_dpa_dual[i+1][0:min_epochs]))
+    acc_gng_dualstack = np.column_stack((acc_gng_dualstack, acc_gng_dual[i+1][0:min_epochs]))
+    acc_dpa_dpastack = np.column_stack((acc_dpa_dpastack, acc_dpa_dpa[i+1][0:min_epochs]))
+    acc_gng_gngstack = np.column_stack((acc_gng_gngstack, acc_gng_gng[i+1][0:min_epochs]))
+
+acc_dpa_dualmean = np.mean(acc_dpa_dualstack, axis=1)
+acc_gng_dualmean = np.mean(acc_gng_dualstack, axis=1)
+acc_dpa_dpamean = np.mean(acc_dpa_dpastack, axis=1)
+acc_gng_gngmean = np.mean(acc_gng_gngstack, axis=1)
+
+epochs = np.arange(min_epochs)
 
 plt.figure()
-plt.plot(epochs, acc_dpa_dual, label='Dual DPA')
-plt.plot(epochs, acc_gng_dual, label='Dual GNG')
-plt.plot(epochs, acc_dpa_dpa, label='DPA DPA')
-plt.plot(epochs, acc_gng_gng, label='GNG GNG')
+plt.plot(epochs, acc_dpa_dualmean, label='Dual DPA')
+plt.plot(epochs, acc_gng_dualmean, label='Dual GNG')
+plt.plot(epochs, acc_dpa_dpamean, label='DPA DPA')
+plt.plot(epochs, acc_gng_gngmean, label='GNG GNG')
 
-plt.xlim([0, 1000])
+#plt.xlim([0, 100])
 plt.legend()
 plt.show()
 

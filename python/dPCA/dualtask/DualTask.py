@@ -148,7 +148,8 @@ class DualTask(RecurrentWhisperer):
                                            [n_batch, n_time, n_inputs])
         self.output_bxtxd = tf.placeholder(tf.float32,
                                            [n_batch, n_time, n_output])
-
+        self.task = tf.placeholder(tf.float32, n_batch)
+        
         # RNN
         if hps.rnn_type == 'vanilla':
             self.rnn_cell = tf.nn.rnn_cell.BasicRNNCell(n_hidden)
@@ -164,7 +165,7 @@ class DualTask(RecurrentWhisperer):
         self.hidden_bxtxd, _ = tf.nn.dynamic_rnn(self.rnn_cell,
                                                  self.inputs_bxtxd,
                                                  initial_state=initial_state)
-#        # TODO add noise to hidden states (neurons) with:
+#        # add noise to hidden states (neurons) with:
 #        self.noise = tf.constant(0.2, dtype='float32')
 #        self.hidden_bxtxd += tf.random.normal(shape=tf.shape(
 #                self.hidden_bxtxd), stddev=self.noise, dtype=tf.float32)
@@ -191,9 +192,67 @@ class DualTask(RecurrentWhisperer):
         self.acc_dpa = tf.reduce_mean(tf.cast(comparison_dpa, tf.float32))
 
         comparison_gng = tf.equal(tf.round(
-                self.pred_output_bxtxd[:, gng_time, 0]),
-                self.output_bxtxd[:, gng_time, 0])
+                self.pred_output_bxtxd[:, 10, 0]),
+                self.output_bxtxd[:, 10, 0])
         self.acc_gng = tf.reduce_mean(tf.cast(comparison_gng, tf.float32))
+# Measure of accuracy for each of the task: dual, DPA, GNG
+        if gng_time == -1:
+            task = self.task
+            zeros = tf.zeros(n_batch, tf.float32)
+            ones = tf.ones(n_batch, tf.float32)
+            twos = ones*2
+            # Dual
+            mask = tf.equal(task, zeros)
+            out = self.output_bxtxd[:, n_time-1, 0]
+            out_dual = tf.boolean_mask(out, mask)
+            pred_out = self.pred_output_bxtxd[:, n_time-1, 0]
+            pred_out_dual = tf.boolean_mask(pred_out, mask)
+            comparison_dpa_dual = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_dpa_dual = tf.reduce_mean(tf.cast(comparison_dpa_dual,
+                                                       tf.float32))
+            
+            out = self.output_bxtxd[:, 10, 0]
+            out_dual = tf.boolean_mask(out, mask)
+            pred_out = self.pred_output_bxtxd[:, 10, 0]
+            pred_out_dual = tf.boolean_mask(pred_out, mask)
+            comparison_gng_dual = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_gng_dual = tf.reduce_mean(tf.cast(comparison_gng_dual,
+                                                       tf.float32))
+            # DPA alone
+            mask = tf.equal(task, ones)
+            out = self.output_bxtxd[:, n_time-1, 0]
+            out_dual = tf.boolean_mask(out, mask)
+            pred_out = self.pred_output_bxtxd[:, n_time-1, 0]
+            pred_out_dual = tf.boolean_mask(pred_out, mask)
+            comparison_dpa_dual = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_dpa_dpa = tf.reduce_mean(tf.cast(comparison_dpa_dual,
+                                                       tf.float32))
+            
+            out = self.output_bxtxd[:, 10, 0]
+            out_dual = tf.boolean_mask(out, mask)
+            pred_out = self.pred_output_bxtxd[:, 10, 0]
+            pred_out_dual = tf.boolean_mask(pred_out, mask)
+            comparison_gng_dual = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_gng_dpa = tf.reduce_mean(tf.cast(comparison_gng_dual,
+                                                       tf.float32))
+            # GNG alone
+            mask = tf.equal(task, twos)
+            out = self.output_bxtxd[:, n_time-1, 0]
+            out_dual = tf.boolean_mask(out, mask)
+            pred_out = self.pred_output_bxtxd[:, n_time-1, 0]
+            pred_out_dual = tf.boolean_mask(pred_out, mask)
+            comparison_dpa_dual = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_dpa_gng = tf.reduce_mean(tf.cast(comparison_dpa_dual,
+                                                       tf.float32))
+            
+            out = self.output_bxtxd[:, 10, 0]
+            out_dual = tf.boolean_mask(out, mask)
+            pred_out = self.pred_output_bxtxd[:, 10, 0]
+            pred_out_dual = tf.boolean_mask(pred_out, mask)
+            comparison_gng_dual = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_gng_gng = tf.reduce_mean(tf.cast(comparison_gng_dual,
+                                                       tf.float32))
+            
 
     def _setup_saver(self):
         '''See docstring in RecurrentWhisperer.'''
@@ -230,13 +289,84 @@ class DualTask(RecurrentWhisperer):
                 variables, taken over the data batch.
         '''
 
+        hps = self.hps
+        data_hps = hps.data_hps
+        n_batch = data_hps['n_batch']
+        gng_time = data_hps['gng_time']
+
         ops_to_eval = [self.train_op,
                        self.grad_global_norm,
                        self.loss,
                        self.merged_opt_summary,
                        self.acc_dpa,
                        self.acc_gng]
-
+        
+        if gng_time == -1:
+            inputs_dual = []
+            outputs_dual = []
+            inputs_dpa = []
+            outputs_dpa = []
+            inputs_gng = []
+            outputs_gng = []
+            for ind_btch in range(n_batch):
+                task_choice = batch_data['task_choice']
+                inputs = batch_data['inputs'][ind_btch, :, :]
+                outputs = batch_data['output'][ind_btch, :, :]
+                if task_choice[ind_btch]==0:
+                    # Get trial for Dualtask
+                    inputs_dual.append(inputs)
+                    outputs_dual.append(outputs)
+                elif task_choice[ind_btch]==1:
+                    # Get trial for DPA
+                    inputs_dpa.append(inputs)
+                    outputs_dpa.append(outputs)
+                else:
+                    # Get trial for GNG
+                    inputs_gng.append(inputs)
+                    outputs_gng.append(outputs)
+                   
+            inputs_dual = np.array(inputs_dual)
+            outputs_dual = np.array(outputs_dual)
+            inputs_dpa = np.array(inputs_dpa)
+            outputs_dpa = np.array(outputs_dpa)
+            inputs_gng = np.array(inputs_gng)
+            outputs_gng = np.array(outputs_gng)
+                
+            # Get accuracy for dual task only trials
+            acc_eval = [self.acc_dpa_dual, self.acc_gng_dual]
+            feed_dict = dict()
+            feed_dict[self.inputs_bxtxd] = batch_data['inputs']
+            feed_dict[self.output_bxtxd] = batch_data['output']
+            feed_dict[self.learning_rate] = self.adaptive_learning_rate()
+            feed_dict[self.grad_norm_clip_val] = self.adaptive_grad_norm_clip()
+            feed_dict[self.task] = task_choice
+            [ev_acc_dpa_dual,
+             ev_acc_gng_dual] = self.session.run(acc_eval, feed_dict=feed_dict)
+            
+            
+            # Get accuracy for DPA task only trials
+            acc_eval = [self.acc_dpa_dpa, self.acc_gng_dpa]
+            feed_dict = dict()
+            feed_dict[self.inputs_bxtxd] = batch_data['inputs']
+            feed_dict[self.output_bxtxd] = batch_data['output']
+            feed_dict[self.learning_rate] = self.adaptive_learning_rate()
+            feed_dict[self.grad_norm_clip_val] = self.adaptive_grad_norm_clip()
+            feed_dict[self.task] = task_choice
+            [ev_acc_dpa_dpa,
+             ev_acc_gng_dpa] = self.session.run(acc_eval, feed_dict=feed_dict)
+            
+            # Get accuracy for GNG task only trials
+            acc_eval = [self.acc_dpa_gng, self.acc_gng_gng]
+            feed_dict = dict()
+            feed_dict[self.inputs_bxtxd] = batch_data['inputs']
+            feed_dict[self.output_bxtxd] = batch_data['output']
+            feed_dict[self.learning_rate] = self.adaptive_learning_rate()
+            feed_dict[self.grad_norm_clip_val] = self.adaptive_grad_norm_clip()
+            feed_dict[self.task] = task_choice
+            [ev_acc_dpa_gng,
+             ev_acc_gng_gng] = self.session.run(acc_eval, feed_dict=feed_dict)
+            
+        #General accuracy
         feed_dict = dict()
         feed_dict[self.inputs_bxtxd] = batch_data['inputs']
         feed_dict[self.output_bxtxd] = batch_data['output']
@@ -263,7 +393,10 @@ class DualTask(RecurrentWhisperer):
             self.writer.add_summary(ev_merged_opt_summary, self._step())
 
         summary = {'loss': ev_loss, 'grad_global_norm': ev_grad_global_norm,
-                   'acc_dpa': ev_acc_dpa, 'acc_gng': ev_acc_gng}
+                   'acc_dpa': ev_acc_dpa, 'acc_gng': ev_acc_gng,
+                   'acc_dpa_dual': ev_acc_dpa_dual, 'acc_gng_dual': ev_acc_gng_dual,
+                   'acc_dpa_dpa': ev_acc_dpa_dpa, 'acc_gng_dpa': ev_acc_gng_dpa,
+                   'acc_dpa_gng': ev_acc_dpa_gng, 'acc_gng_gng': ev_acc_gng_gng}
 
         return summary
 
@@ -304,14 +437,14 @@ class DualTask(RecurrentWhisperer):
             feed_dict[self.output_bxtxd] = batch_data['output']
             [ev_hidden_bxtxd,
              ev_pred_output_bxtxd,
-             ev_acc_dpa,
-             ev_acc_gng] = self.session.run(ops_to_eval, feed_dict=feed_dict)
+             ev_pred_acc_dpa,
+             ev_pred_acc_gng] = self.session.run(ops_to_eval, feed_dict=feed_dict)
 
             predictions = {
                 'state': ev_hidden_bxtxd,
                 'output': ev_pred_output_bxtxd,
-                'ev_acc_dpa': ev_acc_dpa,
-                'ev_acc_gng': ev_acc_gng
+                'ev_acc_dpa': ev_pred_acc_dpa,
+                'ev_acc_gng': ev_pred_acc_gng
                 }
 
             return predictions
@@ -464,7 +597,7 @@ class DualTask(RecurrentWhisperer):
         output = data['output']
         predictions = self.predict(data)
         pred_output = predictions['output']
-        acc_dpa = predictions['ev_acc_dpa']
+        ev_acc_dpa = predictions['ev_acc_dpa']
 
         if stop_time is None:
             stop_time = n_time
@@ -479,11 +612,11 @@ class DualTask(RecurrentWhisperer):
                 if gng_time==-1:
                     plt.title('Example trial %d | Task %d | Acc %d' % (trial_idx + 1,
                                                      task_type[trial_idx],
-                                                     acc_dpa),
+                                                     ev_acc_dpa),
                                   fontweight='bold')
                 else:
                     plt.title('Example trial %d | Acc %d' % (trial_idx + 1,
-                                                             acc_dpa),
+                                                             ev_acc_dpa),
                                 fontweight='bold')
 
             self._plot_single_trial(

@@ -13,13 +13,12 @@ from __future__ import print_function
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-import data
 import data3task
 from RecurrentWhisperer import RecurrentWhisperer
 from DualTask import DualTask
 import random
 
-def plot_trials(self, data, start_time=0, stop_time=None):
+def plot_trials(self, data, pred_data, start_time=0, stop_time=None):
     '''Plots example trials, complete with input pulses, correct outputs,
     and RNN-predicted outputs.
 
@@ -56,8 +55,7 @@ def plot_trials(self, data, start_time=0, stop_time=None):
 
     inputs = data['inputs']
     output = data['output']
-    predictions = dt.predict(data)
-    pred_output = predictions['output']
+    pred_output = pred_data
     acc_dpa = predictions['ev_acc_dpa']
 
     if stop_time is None:
@@ -138,55 +136,55 @@ def _plot_single_trial(input_txd, output_txd, pred_output_txd):
     plt.ylim(-1, n_bits*2+2)
      
          
-
-'''Train an RNN with a given noise and compute the value of the accuracy
- of its predictions'''
-# Hyperparameters for AdaptiveLearningRate
-alr_hps = {'initial_rate': 0.1}
-# Noise range for the input to the RNN
-noise = np.array([0.0])
-#noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
-# Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 
-# then it runs a ramdom trial either of the dualtask, dpa alone or gng alone.
-gng = np.array([-1])
+#
+#'''Train an RNN with a given noise and compute the value of the accuracy
+# of its predictions'''
+## Hyperparameters for AdaptiveLearningRate
+#alr_hps = {'initial_rate': 0.1}
+## Noise range for the input to the RNN
+#noise = np.array([0.0])
+##noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
+## Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 
+## then it runs a ramdom trial either of the dualtask, dpa alone or gng alone.
+#gng = np.array([-1])
+##lamb = np.array([0.0])
 #lamb = np.array([0.0])
-lamb = np.array([0.0])
-delay = np.array([0])
-neuron = np.array([64])
-# number of RNN instances
-inst = 1
-
-# Hyperparameters for DualTask
-# See DualTask.py for detailed descriptions.
-
-hps = {
-    'rnn_type': 'vanilla',
-    'n_hidden': neuron,
-    'min_loss': 1e-6,  # 1e-4
-    'min_learning_rate': 1e-5,
-    'max_n_epochs': 5000,
-    'do_restart_run': False,
-    'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
-    str(noise) + '/delay' + str(delay) + '/neurons' +
-    str(neuron) + '/inst' + str(inst),
-    'data_hps': {
-        'n_batch': 2048,
-        'n_time': 20,
-        'n_bits': 6,
-        'noise': noise,
-        'gng_time': gng,
-        'lamb': lamb,
-        'delay_max': delay},
-    'alr_hps': alr_hps
-    }
-
-# Create DualTask object
-dt = DualTask(**hps)
-# Train the RNN instance for the specific noise
-dt.train()
-
-# Get inputs and outputs from example trials
-random.seed(noise*inst)
-example_trials = dt.generate_dualtask_trials()
-
-is_lstm = dt.hps.rnn_type == 'lstm'
+#delay = np.array([0])
+#neuron = np.array([64])
+## number of RNN instances
+#inst = 1
+#
+## Hyperparameters for DualTask
+## See DualTask.py for detailed descriptions.
+#
+#hps = {
+#    'rnn_type': 'vanilla',
+#    'n_hidden': neuron,
+#    'min_loss': 1e-6,  # 1e-4
+#    'min_learning_rate': 1e-5,
+#    'max_n_epochs': 5000,
+#    'do_restart_run': False,
+#    'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
+#    str(noise) + '/delay' + str(delay) + '/neurons' +
+#    str(neuron) + '/inst' + str(inst),
+#    'data_hps': {
+#        'n_batch': 2048,
+#        'n_time': 20,
+#        'n_bits': 6,
+#        'noise': noise,
+#        'gng_time': gng,
+#        'lamb': lamb,
+#        'delay_max': delay},
+#    'alr_hps': alr_hps
+#    }
+#
+## Create DualTask object
+#dt = DualTask(**hps)
+## Train the RNN instance for the specific noise
+#dt.train()
+#
+## Get inputs and outputs from example trials
+#random.seed(noise*inst)
+#example_trials = dt.generate_dualtask_trials()
+#
+#is_lstm = dt.hps.rnn_type == 'lstm'

@@ -431,21 +431,30 @@ class DualTask(RecurrentWhisperer):
             return self._predict_with_LSTM_cell_states(batch_data)
         else:
             ops_to_eval = [self.hidden_bxtxd, self.pred_output_bxtxd,
-                           self.acc_dpa, self.acc_gng ]
+                           self.acc_dpa, self.acc_gng, self.acc_dpa_dual,
+                           self.acc_dpa_gng, self.acc_dpa_dpa, self.acc_gng_gng]
             feed_dict = dict()
             feed_dict[self.inputs_bxtxd] = batch_data['inputs']
             feed_dict[self.output_bxtxd] = batch_data['output']
+            feed_dict[self.task] = batch_data['task_choice']
             [ev_hidden_bxtxd,
              ev_pred_output_bxtxd,
              ev_pred_acc_dpa,
-             ev_pred_acc_gng] = self.session.run(ops_to_eval, feed_dict=feed_dict)
+             ev_pred_acc_gng,
+             ev_pred_acc_dpa_dual,
+             ev_pred_acc_gng_dual,
+             ev_pred_acc_dpa_dpa,
+             ev_pred_acc_gng_gng] = self.session.run(ops_to_eval, feed_dict=feed_dict)
 
             predictions = {
                 'state': ev_hidden_bxtxd,
                 'output': ev_pred_output_bxtxd,
                 'ev_acc_dpa': ev_pred_acc_dpa,
-                'ev_acc_gng': ev_pred_acc_gng
-                }
+                'ev_acc_gng': ev_pred_acc_gng,
+                'ev_acc_dpa_dual': ev_pred_acc_dpa_dual,
+                'ev_acc_gng_dual': ev_pred_acc_gng_dual,
+                'ev_acc_dpa_dpa': ev_pred_acc_dpa_dpa,
+                'ev_acc_gng_gng': ev_pred_acc_gng_gng}
 
             return predictions
 
@@ -583,7 +592,7 @@ class DualTask(RecurrentWhisperer):
         n_time = self.hps.data_hps['n_time']
         gng_time = self.hps.data_hps['gng_time']
         n_plot = np.min([hps.n_trials_plot, n_batch])
-#        n_plot = 10
+#        n_plot = 1
         dpa2_time = data['vec_tau']
         if gng_time==-1:
             task_type = data['task_choice']
@@ -598,6 +607,10 @@ class DualTask(RecurrentWhisperer):
         predictions = self.predict(data)
         pred_output = predictions['output']
         ev_acc_dpa = predictions['ev_acc_dpa']
+        ev_acc_dpa_dual = predictions['ev_acc_dpa_dual']
+        ev_acc_gng_dual = predictions['ev_acc_gng_dual']
+        ev_acc_dpa_dpa = predictions['ev_acc_dpa_dpa']
+        ev_acc_gng_gng = predictions['ev_acc_gng_gng']
 
         if stop_time is None:
             stop_time = n_time
@@ -610,9 +623,17 @@ class DualTask(RecurrentWhisperer):
                 plt.title('Example trial', fontweight='bold')
             else:
                 if gng_time==-1:
-                    plt.title('Example trial %d | Task %d | Acc %d' % (trial_idx + 1,
-                                                     task_type[trial_idx],
-                                                     ev_acc_dpa),
+                    if task_type[trial_idx] == 0:
+                        plt.title('Example trial %d | Dual-task | Acc DPA %d | Acc GNG %d' %
+                                  (trial_idx + 1, ev_acc_dpa_dual,
+                                   ev_acc_gng_dual), fontweight='bold')
+                    elif task_type[trial_idx] == 1:
+                        plt.title('Example trial %d | DPA task | Acc DPA %d' %
+                                  (trial_idx + 1, ev_acc_dpa_dpa),
+                                  fontweight='bold')
+                    else:
+                        plt.title('Example trial %d | GNG task | Acc GNG %d' %
+                                  (trial_idx + 1, ev_acc_gng_gng),
                                   fontweight='bold')
                 else:
                     plt.title('Example trial %d | Acc %d' % (trial_idx + 1,
@@ -630,6 +651,7 @@ class DualTask(RecurrentWhisperer):
             else:
                 plt.xlabel('Timestep', fontweight='bold')
 
+        f = plt.gcf()
         plt.ion()
         plt.show()
         plt.pause(1e-10)

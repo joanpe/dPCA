@@ -53,7 +53,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     hps = {
         'rnn_type': 'vanilla',
         'n_hidden': neuron,
-        'min_loss': 1e-6,  # 1e-4
+            'min_loss': 1e-6,  # 1e-4
         'min_learning_rate': 1e-5,
         'max_n_epochs': 5000,
         'do_restart_run': True,
@@ -428,6 +428,7 @@ acc_dpa_dual = data['acc']
 #Accuracy across training
 
 plt.figure()
+label_added = False
 for i in range(INST):
     data = np.load(PATH + '/logs_[-1]/lamb0.0/noise0.0/delay0/neurons64/inst' + str(i) + '/fbe1d622d8/accuracies.npz')
     acc_dpa = data['acc_dpa']
@@ -440,17 +441,27 @@ for i in range(INST):
     
     epochs = np.arange(n_epochs//10)
     
-    plt.plot(epochs, acc_dpa_dual, label='Dual DPA', color='r')
-    plt.plot(epochs, acc_gng_dual, label='Dual GNG', color='b')
-    plt.plot(epochs, acc_dpa_dpa, label='DPA DPA', color='g')
-    plt.plot(epochs, acc_gng_gng, label='GNG GNG', color='cyan')
+    if not label_added:
+        plt.plot(epochs, acc_dpa_dual, label='Dual DPA', color='r')
+        plt.plot(epochs, acc_gng_dual, label='Dual GNG', color='b')
+        plt.plot(epochs, acc_dpa_dpa, label='DPA DPA', color='g')
+        plt.plot(epochs, acc_gng_gng, label='GNG GNG', color='cyan')
+        label_added = True        
+    else:
+        plt.plot(epochs, acc_dpa_dual, color='r')
+        plt.plot(epochs, acc_gng_dual, color='b')
+        plt.plot(epochs, acc_dpa_dpa, color='g')
+        plt.plot(epochs, acc_gng_gng, color='cyan')
 
 #plt.xlim([0, 100])
 plt.legend()
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+fig = plt.gcf()
 plt.show()
 
 fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
-np.savefig(os.path.join(fig_dir, 'acc_across_train.png'))
+fig.savefig(os.path.join(fig_dir, 'acc_across_train.png'))
     
     
     
@@ -500,7 +511,11 @@ plt.plot(epochs, acc_gng_gngmean, label='GNG GNG')
 
 #plt.xlim([0, 100])
 plt.legend()
+plt.xlabel('Epoch')
+plt.ylabel('Mean accuracy')
+fig = plt.gcf()
 plt.show()
 
 
+fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train.png'))
 

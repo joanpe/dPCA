@@ -71,8 +71,8 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
                                 gt_gng.reshape(n_batch, 1),
                                 gt_dpa.reshape(n_batch, 1)), axis=1)
 
-    return {'inputs': inputs, 'output': outputs, 'stim_conf': stim_conf,
-            'vec_tau': vec_tau}
+    return {'inputs': inputs, 'output': outputs, 'task_choice': gng_time,
+            'stim_conf': stim_conf, 'vec_tau': vec_tau}
 
 
 def get_stims(stim, n_batch):

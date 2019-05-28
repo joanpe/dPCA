@@ -29,7 +29,7 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
             inp, out, conf, tau = dpa(n_time, n_bits, gng_time, lamb=0,
                                       delay_max=0, noise=0, mat_conv=[0, 1])
         else:
-            # Get trial for DPA
+            # Get trial for GNG
             inp, out, conf, tau = gng(n_time, n_bits, gng_time, lamb=0,
                                       delay_max=0, noise=0, mat_conv=[0, 1])
 

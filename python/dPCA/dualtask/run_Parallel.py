@@ -56,7 +56,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
             'min_loss': 1e-6,  # 1e-4
         'min_learning_rate': 1e-5,
         'max_n_epochs': 5000,
-        'do_restart_run': True,
+        'do_restart_run': False,
         'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
         str(noise) + '/delay' + str(delay) + '/neurons' +
         str(neuron) + '/inst' + str(inst),
@@ -110,6 +110,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     else:
         f.savefig(os.path.join(plot_dir, 'Inst' + str(inst) + '.svg'))
 
+    plt.close()
     return [acc_dpa, acc_gng, state, task_type, acc_dpa_dual, acc_gng_dual,\
             acc_dpa_dpa, acc_gng_gng]
 
@@ -120,8 +121,6 @@ if gng_rng == -1:
     gng = gng_rng
     acc = []
     state = []
-    plt.figure()
-    plt.clf()
     
     for l in  lamb:
         
@@ -478,11 +477,12 @@ plt.legend()
 plt.xlabel('Epoch')
 plt.ylabel('Accuracy')
 fig = plt.gcf()
-plt.show()
+#plt.show()
 
 fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
 fig.savefig(os.path.join(fig_dir, 'acc_across_train_inst' + str(INST) +
                          '.svg'))
+plt.close()
     
     
 
@@ -536,8 +536,9 @@ plt.legend()
 plt.xlabel('Epoch')
 plt.ylabel('Mean accuracy')
 fig = plt.gcf()
-plt.show()
+#plt.show()
 
 
 fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train.svg'))
+plt.close()
 

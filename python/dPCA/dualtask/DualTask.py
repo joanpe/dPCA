@@ -652,9 +652,9 @@ class DualTask(RecurrentWhisperer):
                 plt.xlabel('Timestep', fontweight='bold')
 
         f = plt.gcf()
-        plt.ion()
-        plt.show()
-        plt.pause(1e-10)
+#        plt.ion()
+#        plt.show()
+#        plt.pause(1e-10)
         return f
 
     @staticmethod

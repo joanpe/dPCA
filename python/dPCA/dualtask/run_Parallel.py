@@ -46,14 +46,14 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     of its predictions'''
     # Hyperparameters for AdaptiveLearningRate
     alr_hps = {'initial_rate': 0.1}
-    
+
     # Hyperparameters for DualTask
     # See DualTask.py for detailed descriptions.
-    
+
     hps = {
         'rnn_type': 'vanilla',
         'n_hidden': neuron,
-            'min_loss': 1e-6,  # 1e-4
+        'min_loss': 1e-6,  # 1e-4
         'min_learning_rate': 1e-5,
         'max_n_epochs': 5000,
         'do_restart_run': False,
@@ -70,7 +70,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
             'delay_max': delay_max},
         'alr_hps': alr_hps
         }
-    
+
     # Create DualTask object
     dt = DualTask(**hps)
     # Train the RNN instance for the specific noise
@@ -81,7 +81,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     example_trials = dt.generate_dualtask_trials()
 
     is_lstm = dt.hps.rnn_type == 'lstm'
-    
+
     # Compute RNN predictions from example trials
     example_predictions = dt.predict(example_trials,
                                      do_predict_full_LSTM_state=is_lstm)
@@ -94,15 +94,15 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     acc_gng_dual = example_predictions['ev_acc_gng_dual']
     acc_dpa_dpa = example_predictions['ev_acc_dpa_dpa']
     acc_gng_gng = example_predictions['ev_acc_gng_gng']
-    if gng==-1:
+    if gng == -1:
         task_type = example_trials['task_choice']
     else:
         task_type = 0
-    
-    
-    # Plot example trials
+
+
+# Plot example trials
     f = dt.plot_trials(example_trials)
-    
+
     plot_dir = os.path.join(PATH, 'task_plots')
     if os.path.isdir(plot_dir) is False:
         os.mkdir(plot_dir)
@@ -111,7 +111,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
         f.savefig(os.path.join(plot_dir, 'Inst' + str(inst) + '.svg'))
 
     plt.close()
-    return [acc_dpa, acc_gng, state, task_type, acc_dpa_dual, acc_gng_dual,\
+    return [acc_dpa, acc_gng, state, task_type, acc_dpa_dual, acc_gng_dual,
             acc_dpa_dpa, acc_gng_gng]
 
 # Condition for which we assign 1 different task of 3 in each trial

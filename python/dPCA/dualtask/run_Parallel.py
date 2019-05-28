@@ -513,10 +513,10 @@ acc_gng_dualstack = acc_gng_dual[0][0:min_epochs]
 acc_dpa_dpastack = acc_dpa_dpa[0][0:min_epochs]
 acc_gng_gngstack = acc_gng_gng[0][0:min_epochs]
 for i in range(INST-1):
-        acc_dpa_dualstack = np.column_stack((acc_dpa_dualstack, acc_dpa_dual[i+1][0:min_epochs]))
-        acc_gng_dualstack = np.column_stack((acc_gng_dualstack, acc_gng_dual[i+1][0:min_epochs]))
-        acc_dpa_dpastack = np.column_stack((acc_dpa_dpastack, acc_dpa_dpa[i+1][0:min_epochs]))
-        acc_gng_gngstack = np.column_stack((acc_gng_gngstack, acc_gng_gng[i+1][0:min_epochs]))
+    acc_dpa_dualstack = np.column_stack((acc_dpa_dualstack, acc_dpa_dual[i+1][0:min_epochs]))
+    acc_gng_dualstack = np.column_stack((acc_gng_dualstack, acc_gng_dual[i+1][0:min_epochs]))
+    acc_dpa_dpastack = np.column_stack((acc_dpa_dpastack, acc_dpa_dpa[i+1][0:min_epochs]))
+    acc_gng_gngstack = np.column_stack((acc_gng_gngstack, acc_gng_gng[i+1][0:min_epochs]))
 
 acc_dpa_dualmean = np.mean(acc_dpa_dualstack, axis=1)
 acc_gng_dualmean = np.mean(acc_gng_dualstack, axis=1)

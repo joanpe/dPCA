@@ -106,9 +106,9 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     plot_dir = os.path.join(PATH, 'task_plots')
     if os.path.isdir(plot_dir) is False:
         os.mkdir(plot_dir)
-        f.savefig(os.path.join(plot_dir, 'Inst' + str(inst) + '.png'))
+        f.savefig(os.path.join(plot_dir, 'Inst' + str(inst) + '.svg'))
     else:
-        f.savefig(os.path.join(plot_dir, 'Inst' + str(inst) + '.png'))
+        f.savefig(os.path.join(plot_dir, 'Inst' + str(inst) + '.svg'))
 
     return [acc_dpa, acc_gng, state, task_type, acc_dpa_dual, acc_gng_dual,\
             acc_dpa_dpa, acc_gng_gng]
@@ -461,8 +461,6 @@ for i in range(INST):
     n_epochs = data['n_epochs']
     
     epochs = np.arange(n_epochs//10)
-#    epochs = acc_dpa_dual.shape
-#    epochs = np.arange(epochs[0])
     if not label_added:
         plt.plot(epochs, acc_dpa_dual, label='Dual DPA', color='r')
         plt.plot(epochs, acc_gng_dual, label='Dual GNG', color='b')
@@ -484,7 +482,7 @@ plt.show()
 
 fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
 fig.savefig(os.path.join(fig_dir, 'acc_across_train_inst' + str(INST) +
-                         '.png'))
+                         '.svg'))
     
     
 
@@ -515,7 +513,6 @@ acc_gng_dualstack = acc_gng_dual[0][0:min_epochs]
 acc_dpa_dpastack = acc_dpa_dpa[0][0:min_epochs]
 acc_gng_gngstack = acc_gng_gng[0][0:min_epochs]
 for i in range(INST-1):
-#    if i>22:
         acc_dpa_dualstack = np.column_stack((acc_dpa_dualstack, acc_dpa_dual[i+1][0:min_epochs]))
         acc_gng_dualstack = np.column_stack((acc_gng_dualstack, acc_gng_dual[i+1][0:min_epochs]))
         acc_dpa_dpastack = np.column_stack((acc_dpa_dpastack, acc_dpa_dpa[i+1][0:min_epochs]))
@@ -542,5 +539,5 @@ fig = plt.gcf()
 plt.show()
 
 
-fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train.png'))
+fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train.svg'))
 

@@ -561,7 +561,7 @@ class DualTask(RecurrentWhisperer):
 
     def _setup_visualizations(self):
         '''See docstring in RecurrentWhisperer.'''
-        FIG_WIDTH = 6  # inches
+        FIG_WIDTH = 18  # inches
         FIX_HEIGHT = 9  # inches
         self.fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
                               tight_layout=True)
@@ -591,8 +591,8 @@ class DualTask(RecurrentWhisperer):
         n_batch = self.hps.data_hps['n_batch']
         n_time = self.hps.data_hps['n_time']
         gng_time = self.hps.data_hps['gng_time']
-        n_plot = np.min([hps.n_trials_plot, n_batch])
-#        n_plot = 1
+#        n_plot = np.min([hps.n_trials_plot, n_batch])
+        n_plot = 12
         dpa2_time = data['vec_tau']
         if gng_time==-1:
             task_type = data['task_choice']
@@ -618,22 +618,22 @@ class DualTask(RecurrentWhisperer):
         time_idx = range(start_time, stop_time)
 
         for trial_idx in range(n_plot):
-            plt.subplot(n_plot, 1, trial_idx+1)
+            plt.subplot(n_plot, 3, trial_idx+1)
             if n_plot == 1:
                 plt.title('Example trial', fontweight='bold')
             else:
                 if gng_time==-1:
                     if task_type[trial_idx] == 0:
-                        plt.title('Example trial %d | Dual-task | Acc DPA %d | Acc GNG %d' %
-                                  (trial_idx + 1, ev_acc_dpa_dual,
+                        plt.title('Dual-task | Acc DPA %d | Acc GNG %d' %
+                                  (ev_acc_dpa_dual,
                                    ev_acc_gng_dual), fontweight='bold')
                     elif task_type[trial_idx] == 1:
-                        plt.title('Example trial %d | DPA task | Acc DPA %d' %
-                                  (trial_idx + 1, ev_acc_dpa_dpa),
+                        plt.title('DPA task | Acc DPA %d' %
+                                  (ev_acc_dpa_dpa),
                                   fontweight='bold')
                     else:
-                        plt.title('Example trial %d | GNG task | Acc GNG %d' %
-                                  (trial_idx + 1, ev_acc_gng_gng),
+                        plt.title('GNG task | Acc GNG %d' %
+                                  (ev_acc_gng_gng),
                                   fontweight='bold')
                 else:
                     plt.title('Example trial %d | Acc %d' % (trial_idx + 1,

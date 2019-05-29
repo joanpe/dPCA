@@ -22,12 +22,14 @@ from DualTask import DualTask
 #from dPCA import dPCA
 from joblib import Parallel, delayed
 import multiprocessing
+from matplotlib import cm
+import matplotlib.colors
 
 # *****************************************************************************
 # STEP 1: Train RNNs to solve the dual task *********************************
 # *****************************************************************************
 # Noise range for the input to the RNN
-noise_rng = np.array([0.2])
+noise_rng = np.array([0.0])
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 
 # then it runs a ramdom trial either of the dualtask, dpa alone or gng alone.
@@ -56,7 +58,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
         'min_loss': 1e-6,  # 1e-4
         'min_learning_rate': 1e-5,
         'max_n_epochs': 5000,
-        'do_restart_run': True,
+        'do_restart_run': False,
         'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
         str(noise) + '/delay' + str(delay) + '/neurons' +
         str(neuron) + '/inst' + str(inst),
@@ -94,10 +96,13 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
     acc_gng_dual = example_predictions['ev_acc_gng_dual']
     acc_dpa_dpa = example_predictions['ev_acc_dpa_dpa']
     acc_gng_gng = example_predictions['ev_acc_gng_gng']
+    vec_acc_dual = example_predictions['vec_acc_dpa_dual']
+    vec_acc_dpa = example_predictions['vec_acc_dpa_dpa']
     if gng == -1:
         task_type = example_trials['task_choice']
     else:
         task_type = 0
+    stim_conf = example_trials['stim_conf']
 
 
 # Plot example trials
@@ -112,7 +117,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
 
     plt.close()
     return [acc_dpa, acc_gng, state, task_type, acc_dpa_dual, acc_gng_dual,
-            acc_dpa_dpa, acc_gng_gng]
+            acc_dpa_dpa, acc_gng_gng, vec_acc_dual, vec_acc_dpa, stim_conf]
 
 # Condition for which we assign 1 different task of 3 in each trial
 if gng_rng == -1:
@@ -142,6 +147,9 @@ if gng_rng == -1:
                     acc_gng_dual = []
                     acc_dpa_dpa = []
                     acc_gng_gng = []
+                    vec_acc_dual = []
+                    vec_acc_dpa = []
+                    stim_conf = []
                     for i in range(INST):
                         acc_dpa.append(ops[i][0])
                         acc_gng.append(ops[i][1])
@@ -151,13 +159,18 @@ if gng_rng == -1:
                         acc_gng_dual.append(ops[i][5])
                         acc_dpa_dpa.append(ops[i][6])
                         acc_gng_gng.append(ops[i][7])
+                        vec_acc_dual.append(ops[i][8])
+                        vec_acc_dpa.append(ops[i][9])
+                        stim_conf.append(ops[i][10])
                         
                     acc.append([noise, acc_dpa, acc_gng, acc_dpa_dual,
-                                acc_gng_dual, acc_dpa_dpa, acc_gng_gng])
+                                acc_gng_dual, acc_dpa_dpa, acc_gng_gng,
+                                vec_acc_dual, vec_acc_dpa])
                   
     
         # save data and figure
-            data = {'acc': acc, 'state': state, 'task': task}
+            data = {'acc': acc, 'state': state, 'task': task,
+                    'stim_conf': stim_conf}
         
             fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
             if os.path.isdir(fig_dir) is False:
@@ -445,12 +458,12 @@ fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
 
 
 #Accuracy across training
-
+noise = noise_rng[0]
 plt.figure()
 label_added = False
 for i in range(INST):
-    data = np.load(PATH + '/logs_-1/lamb0.0/noise0.2/delay0/neurons64/inst'
-                   + str(i) + '/cdd99a83bc/accuracies.npz')
+    data = np.load(PATH + '/logs_-1/lamb0.0/noise' + str(noise) + '/delay0/neurons64/inst'
+                   + str(i) + '/9afbb8777a/accuracies.npz')
     acc_dpa = data['acc_dpa']
     acc_gng = data['acc_gng']
     acc_dpa_dual = data['acc_dpa_dual']
@@ -492,8 +505,8 @@ acc_gng_gng = []
 n_epochs = []
 
 for i in range(INST):
-    data = np.load(PATH + '/logs_-1/lamb0.0/noise0.2/delay0/neurons64/inst'
-                   + str(i) + '/cdd99a83bc/accuracies.npz')
+    data = np.load(PATH + '/logs_-1/lamb0.0/noise' + str(noise) + '/delay0/neurons64/inst'
+                   + str(i) + '/9afbb8777a/accuracies.npz')
     acc = data['acc_dpa_dual']
     acc_dpa_dual.append(acc)
     acc = data['acc_gng_dual']
@@ -547,7 +560,8 @@ plt.close()
 
 
 # Plot accuracy of DPA in dual task against accuracy of DPA in dpa alone
-data = np.load(os.path.join(fig_dir, 'data_-1_0.0_0_i50_n0.2-0.2_neu64-64.npz'))
+data = np.load(os.path.join(fig_dir, 'data_-1_0.0_0_i50_n' + str(noise) + '-' +
+                            str(noise) + '_neu64-64.npz'))
 
 dual_acc = data['acc'][0][3]
 dpa_acc = data['acc'][0][5]
@@ -555,7 +569,9 @@ n = np.arange(INST)
 
 f, ax = plt.subplots()
 ax.scatter(dpa_acc, dual_acc)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls='--', color='grey')
+ax.plot([0.4, 1], [0.4, 1], ls='--', color='grey')
+for i, num in enumerate(n):
+    plt.annotate(num, (dpa_acc[i], dual_acc[i]))
 plt.xlabel('DPA acc')
 plt.ylabel('dual DPA acc')
 f.savefig(os.path.join(fig_dir, 'dpa_vs_dual_acc' + str(noise) + '.svg'))
@@ -568,8 +584,8 @@ acc_dpa_dpa = []
 n_epochs = []
 inst_cond = []
 for i in range(INST):
-    data = np.load(PATH + '/logs_-1/lamb0.0/noise0.2/delay0/neurons64/inst'
-                   + str(i) + '/cdd99a83bc/accuracies.npz')
+    data = np.load(PATH + '/logs_-1/lamb0.0/noise' + str(noise) + '/delay0/neurons64/inst'
+                   + str(i) + '/9afbb8777a/accuracies.npz')
     if dpa_acc[i] > 0.55:
         if dual_acc[i] < dpa_acc[i]:
             acc = data['acc_dpa_dual']
@@ -622,6 +638,78 @@ plt.show()
 
 fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train_dual_vs_dpa' + str(noise) + '.svg'))
 plt.close()
+
+
+
+# Count which number of stimulus pairs (s1-s3/s4 or s2-s3/s4) are correct
+# for the conditions that appears s5 or s6 during the distractor
+
+fig_dir_dir = os.path.join(PATH, 'plots')
+data = np.load(os.path.join(fig_dir, 'data_-1_0.0_0_i50_n' + str(noise) + '-' +
+                        str(noise) + '_neu64-64.npz'))
+
+task = data['task']
+stim = data['stim_conf']
+stim_dual = []
+stim_dpa = []
+acc_dual = []
+acc_dpa = []
+for i in range(INST):
+    stim_dual.append(stim[i, task[i, :]==0])
+    stim_dpa.append(stim[i, task[i, :]==1])
+    acc_dual.append(data['acc'][0][7][i]*1)
+    acc_dpa.append(data['acc'][0][8][i]*1)
+
+matdual_inst = []
+matdpa_inst = []
+for i in range(2):
+    matdual = np.zeros((2, 2, 2))
+    for gng in range(2):
+        matdpa = np.zeros((2, 2))
+        for dpa1 in range(2):
+            for dpa2 in range(2):
+                ind_dual = np.logical_and.reduce((stim_dual[i][:, 0]==dpa1,
+                                                stim_dual[i][:, 1]==dpa2,
+                                                stim_dual[i][:, 2]==gng))
+                matdual[dpa1, dpa2, gng] = np.sum(acc_dual[i][ind_dual])
+                ind_dpa = np.logical_and(stim_dpa[i][:, 0]==dpa1,
+                                         stim_dpa[i][:, 1]==dpa2)
+                matdpa[dpa1, dpa2] = np.sum(acc_dpa[i][ind_dpa])
+    plt.figure()
+    ax = plt.subplot(2, 2, 1)
+    norm = matplotlib.colors.Normalize(vmin=0, vmax=1)
+    ax.imshow(matdual[:, :, 0], aspect='auto', label='S5')
+    ax.set_title('Stimulus S5 appears')
+    
+    ax = plt.subplot(2, 2, 2)
+    ax.imshow(matdual[:, :, 1], aspect='auto', label='S6')
+    ax.set_title('Stimulus S6 appears')
+    m = cm.ScalarMappable(cmap=plt.cm.summer, norm=norm)
+    m.set_array([])
+    plt.colorbar(ax=ax.ravel().tolist())    
+    
+    ax = plt.subplot(2, 2, 3)
+    ax.imshow(matdpa, aspect='auto', label='DPA alone')
+    ax.set_title('No distractor')
+    
+    plt.set_xticklabels(['', 'S3', '', 'S4', ''])
+    plt.set_yticklabels(['', 'S1', '', 'S2', ''])
+    
+    
+    if not os.path.exists(fig_dir_dir):
+        os.mkdir(fig_dir_dir)
+        plt.savefig(os.path.join(fig_dir_dir, 'Inst' + str(i) + '.svg'))
+    else:
+        plt.savefig(os.path.join(fig_dir_dir, 'Inst' + str(i) + '.svg'))
+    
+    matdual_inst.append(matdual)
+    matdpa_inst.append(matdpa)
+
+    
+
+
+
+
 
 
 

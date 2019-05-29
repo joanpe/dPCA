@@ -27,7 +27,7 @@ import multiprocessing
 # STEP 1: Train RNNs to solve the dual task *********************************
 # *****************************************************************************
 # Noise range for the input to the RNN
-noise_rng = np.array([0.0])
+noise_rng = np.array([0.2])
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 
 # then it runs a ramdom trial either of the dualtask, dpa alone or gng alone.
@@ -56,7 +56,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
         'min_loss': 1e-6,  # 1e-4
         'min_learning_rate': 1e-5,
         'max_n_epochs': 5000,
-        'do_restart_run': False,
+        'do_restart_run': True,
         'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
         str(noise) + '/delay' + str(delay) + '/neurons' +
         str(neuron) + '/inst' + str(inst),
@@ -103,7 +103,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
 # Plot example trials
     f = dt.plot_trials(example_trials)
 
-    plot_dir = os.path.join(PATH, 'task_plots')
+    plot_dir = os.path.join(PATH, 'task_plots/noise' + str(noise))
     if os.path.isdir(plot_dir) is False:
         os.mkdir(plot_dir)
         f.savefig(os.path.join(plot_dir, 'Inst' + str(inst) + '.svg'))
@@ -449,8 +449,8 @@ fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
 plt.figure()
 label_added = False
 for i in range(INST):
-    data = np.load(PATH + '/logs_-1/lamb0.0/noise0.0/delay0/neurons64/inst'
-                   + str(i) + '/9afbb8777a/accuracies.npz')
+    data = np.load(PATH + '/logs_-1/lamb0.0/noise0.2/delay0/neurons64/inst'
+                   + str(i) + '/cdd99a83bc/accuracies.npz')
     acc_dpa = data['acc_dpa']
     acc_gng = data['acc_gng']
     acc_dpa_dual = data['acc_dpa_dual']
@@ -481,7 +481,7 @@ fig = plt.gcf()
 
 fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
 fig.savefig(os.path.join(fig_dir, 'acc_across_train_inst' + str(INST) +
-                         '.svg'))
+                         '_noise_' + str(noise) + '.svg'))
 plt.close()
 
 
@@ -492,8 +492,8 @@ acc_gng_gng = []
 n_epochs = []
 
 for i in range(INST):
-    data = np.load(PATH + '/logs_-1/lamb0.0/noise0.0/delay0/neurons64/inst'
-                   + str(i) + '/9afbb8777a/accuracies.npz')
+    data = np.load(PATH + '/logs_-1/lamb0.0/noise0.2/delay0/neurons64/inst'
+                   + str(i) + '/cdd99a83bc/accuracies.npz')
     acc = data['acc_dpa_dual']
     acc_dpa_dual.append(acc)
     acc = data['acc_gng_dual']
@@ -542,33 +542,86 @@ fig = plt.gcf()
 #plt.show()
 
 
-fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train.svg'))
+fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train' + str(noise) + '.svg'))
 plt.close()
 
 
 # Plot accuracy of DPA in dual task against accuracy of DPA in dpa alone
-data = np.load(os.path.join(fig_dir, 'data_' + str(gng) + '_' +
-                            str(l) + '_' + str(delay) + '_i' + str(INST) +
-                            '_n' + str(noise_rng[0]) + '-' +
-                            str(noise_rng[-1]) + '_neu' +
-                            str(num_neurons[0]) + '-' +
-                            str(num_neurons[-1])))
+data = np.load(os.path.join(fig_dir, 'data_-1_0.0_0_i50_n0.2-0.2_neu64-64.npz'))
 
-dual_acc = data['acc'][3]
-dpa_acc = data['acc'][5]
+dual_acc = data['acc'][0][3]
+dpa_acc = data['acc'][0][5]
 n = np.arange(INST)
 
-ax = plt.figure()
+f, ax = plt.subplots()
 ax.scatter(dpa_acc, dual_acc)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes)
+ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls='--', color='grey')
+plt.xlabel('DPA acc')
+plt.ylabel('dual DPA acc')
+f.savefig(os.path.join(fig_dir, 'dpa_vs_dual_acc' + str(noise) + '.svg'))
 
-for i, txt in enumerate(n):
-    ax.annotate(txt, (dpa_acc[i], dual_acc[i]))
+# Plot accuracy across training of the instances where acc DPA > acc DPA 
+# dual at the end of the training and also acc dpa>0.55
+
+acc_dpa_dual = []
+acc_dpa_dpa = []
+n_epochs = []
+inst_cond = []
+for i in range(INST):
+    data = np.load(PATH + '/logs_-1/lamb0.0/noise0.2/delay0/neurons64/inst'
+                   + str(i) + '/cdd99a83bc/accuracies.npz')
+    if dpa_acc[i] > 0.55:
+        if dual_acc[i] < dpa_acc[i]:
+            acc = data['acc_dpa_dual']
+            acc_dpa_dual.append(acc)
+            acc = data['acc_dpa_dpa']
+            acc_dpa_dpa.append(acc)
+            n = data['n_epochs']
+            n_epochs.append(n)
+            inst_cond.append(i)
+            
+#inst_cond = np.array(inst_cond)
+n = np.shape(n_epochs)[0]
+min_epochs = np.min(tuple(n_epochs[i] for i in range(n)))//10
+acc_dpa_dualstack = acc_dpa_dual[0][0:min_epochs]
+acc_dpa_dpastack = acc_dpa_dpa[0][0:min_epochs]
+for i in range(n-1):
+    acc_dpa_dualstack = np.column_stack((acc_dpa_dualstack,
+                                         acc_dpa_dual[i+1][0:min_epochs]))
+    acc_dpa_dpastack = np.column_stack((acc_dpa_dpastack,
+                                        acc_dpa_dpa[i+1][0:min_epochs]))
+
+acc_dpa_dualmean = np.mean(acc_dpa_dualstack, axis=1)
+acc_dpa_dpamean = np.mean(acc_dpa_dpastack, axis=1)
+
+acc_dpa_dualstd = np.std(acc_dpa_dualstack, axis=1)
+acc_dpa_dpastd = np.std(acc_dpa_dpastack, axis=1)
+
+epochs = np.arange(min_epochs)
+
+plt.figure()
+plt.plot(epochs, acc_dpa_dualmean, label='Dual DPA', color='r')
+plt.plot(epochs, acc_dpa_dpamean, label='DPA DPA', color='g')
+
+for i, num in enumerate(inst_cond):
+    plt.plot(epochs, acc_dpa_dualstack[:, i], color='r', alpha=0.2)
+    plt.plot(epochs, acc_dpa_dpastack[:, i], color='g', alpha=0.2)
+    plt.annotate(num, (epochs[-1] + 1, acc_dpa_dualstack[-1, i]))
+#plt.fill_between(epochs, acc_dpa_dualmean-acc_dpa_dualstd, acc_dpa_dualmean+
+#                 acc_dpa_dualstd, color='r', alpha=0.5)
+#plt.fill_between(epochs, acc_dpa_dpamean-acc_dpa_dpastd, acc_dpa_dpamean+
+#                 acc_dpa_dpastd, color='g', alpha=0.5)
+
+#plt.xlim([0, 100])
+plt.legend()
+plt.xlabel('Epoch')
+plt.ylabel('Mean accuracy')
+fig = plt.gcf()
+plt.show()
 
 
-
-
-
+fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train_dual_vs_dpa' + str(noise) + '.svg'))
+plt.close()
 
 
 

@@ -561,7 +561,7 @@ class DualTask(RecurrentWhisperer):
 
     def _setup_visualizations(self):
         '''See docstring in RecurrentWhisperer.'''
-        FIG_WIDTH = 24  # inches
+        FIG_WIDTH = 36  # inches
         FIX_HEIGHT = 9  # inches
         self.fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
                               tight_layout=True)
@@ -592,7 +592,7 @@ class DualTask(RecurrentWhisperer):
         n_time = self.hps.data_hps['n_time']
         gng_time = self.hps.data_hps['gng_time']
 #        n_plot = np.min([hps.n_trials_plot, n_batch])
-        n_plot = 24
+        n_plot = 36
         dpa2_time = data['vec_tau']
         if gng_time==-1:
             task_type = data['task_choice']
@@ -618,7 +618,7 @@ class DualTask(RecurrentWhisperer):
         time_idx = range(start_time, stop_time)
 
         for trial_idx in range(n_plot):
-            plt.subplot(6, 4, trial_idx+1)
+            plt.subplot(6, 6, trial_idx+1)
             if n_plot == 1:
                 plt.title('Example trial', fontweight='bold')
             else:

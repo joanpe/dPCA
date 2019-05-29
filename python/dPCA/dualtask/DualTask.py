@@ -210,7 +210,7 @@ class DualTask(RecurrentWhisperer):
             comparison_dpa_dual = tf.equal(tf.round(pred_out_dual), out_dual)
             self.acc_dpa_dual = tf.reduce_mean(tf.cast(comparison_dpa_dual,
                                                        tf.float32))
-            
+
             out = self.output_bxtxd[:, 10, 0]
             out_dual = tf.boolean_mask(out, mask)
             pred_out = self.pred_output_bxtxd[:, 10, 0]

@@ -206,34 +206,34 @@ class DualTask(RecurrentWhisperer):
             out = self.output_bxtxd[:, n_time-1, 0]
             out_dual = tf.boolean_mask(out, mask)
             pred_out = self.pred_output_bxtxd[:, n_time-1, 0]
-            pred_out_dual = tf.boolean_mask(pred_out, mask)
-            comparison_dpa_dual = tf.equal(tf.round(pred_out_dual), out_dual)
-            self.acc_dpa_dual = tf.reduce_mean(tf.cast(comparison_dpa_dual,
+            self.pred_out_dpa_dual = tf.boolean_mask(pred_out, mask)
+            self.comparison_dpa_dual = tf.equal(tf.round(self.pred_out_dpa_dual), out_dual)
+            self.acc_dpa_dual = tf.reduce_mean(tf.cast(self.comparison_dpa_dual,
                                                        tf.float32))
 
             out = self.output_bxtxd[:, 10, 0]
             out_dual = tf.boolean_mask(out, mask)
             pred_out = self.pred_output_bxtxd[:, 10, 0]
             pred_out_dual = tf.boolean_mask(pred_out, mask)
-            comparison_gng_dual = tf.equal(tf.round(pred_out_dual), out_dual)
-            self.acc_gng_dual = tf.reduce_mean(tf.cast(comparison_gng_dual,
+            self.comparison_gng_dual = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_gng_dual = tf.reduce_mean(tf.cast(self.comparison_gng_dual,
                                                        tf.float32))
             # DPA alone
             mask = tf.equal(task, ones)
             out = self.output_bxtxd[:, n_time-1, 0]
             out_dual = tf.boolean_mask(out, mask)
             pred_out = self.pred_output_bxtxd[:, n_time-1, 0]
-            pred_out_dual = tf.boolean_mask(pred_out, mask)
-            comparison_dpa_dual = tf.equal(tf.round(pred_out_dual), out_dual)
-            self.acc_dpa_dpa = tf.reduce_mean(tf.cast(comparison_dpa_dual,
+            self.pred_out_dpa_dpa = tf.boolean_mask(pred_out, mask)
+            self.comparison_dpa_dpa = tf.equal(tf.round(self.pred_out_dpa_dpa), out_dual)
+            self.acc_dpa_dpa = tf.reduce_mean(tf.cast(self.comparison_dpa_dpa,
                                                        tf.float32))
             
             out = self.output_bxtxd[:, 10, 0]
             out_dual = tf.boolean_mask(out, mask)
             pred_out = self.pred_output_bxtxd[:, 10, 0]
             pred_out_dual = tf.boolean_mask(pred_out, mask)
-            comparison_gng_dual = tf.equal(tf.round(pred_out_dual), out_dual)
-            self.acc_gng_dpa = tf.reduce_mean(tf.cast(comparison_gng_dual,
+            self.comparison_gng_dpa = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_gng_dpa = tf.reduce_mean(tf.cast(self.comparison_gng_dpa,
                                                        tf.float32))
             # GNG alone
             mask = tf.equal(task, twos)
@@ -241,16 +241,16 @@ class DualTask(RecurrentWhisperer):
             out_dual = tf.boolean_mask(out, mask)
             pred_out = self.pred_output_bxtxd[:, n_time-1, 0]
             pred_out_dual = tf.boolean_mask(pred_out, mask)
-            comparison_dpa_dual = tf.equal(tf.round(pred_out_dual), out_dual)
-            self.acc_dpa_gng = tf.reduce_mean(tf.cast(comparison_dpa_dual,
+            self.comparison_dpa_gng = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_dpa_gng = tf.reduce_mean(tf.cast(self.comparison_dpa_gng,
                                                        tf.float32))
             
             out = self.output_bxtxd[:, 10, 0]
             out_dual = tf.boolean_mask(out, mask)
             pred_out = self.pred_output_bxtxd[:, 10, 0]
             pred_out_dual = tf.boolean_mask(pred_out, mask)
-            comparison_gng_dual = tf.equal(tf.round(pred_out_dual), out_dual)
-            self.acc_gng_gng = tf.reduce_mean(tf.cast(comparison_gng_dual,
+            self.comparison_gng_gng = tf.equal(tf.round(pred_out_dual), out_dual)
+            self.acc_gng_gng = tf.reduce_mean(tf.cast(self.comparison_gng_gng,
                                                        tf.float32))
             
 
@@ -432,7 +432,10 @@ class DualTask(RecurrentWhisperer):
         else:
             ops_to_eval = [self.hidden_bxtxd, self.pred_output_bxtxd,
                            self.acc_dpa, self.acc_gng, self.acc_dpa_dual,
-                           self.acc_dpa_gng, self.acc_dpa_dpa, self.acc_gng_gng]
+                           self.acc_dpa_gng, self.acc_dpa_dpa,
+                           self.acc_gng_gng, self.comparison_dpa_dual,
+                           self.comparison_dpa_dpa, self.pred_out_dpa_dual,
+                           self.pred_out_dpa_dpa]
             feed_dict = dict()
             feed_dict[self.inputs_bxtxd] = batch_data['inputs']
             feed_dict[self.output_bxtxd] = batch_data['output']
@@ -444,7 +447,11 @@ class DualTask(RecurrentWhisperer):
              ev_pred_acc_dpa_dual,
              ev_pred_acc_gng_dual,
              ev_pred_acc_dpa_dpa,
-             ev_pred_acc_gng_gng] = self.session.run(ops_to_eval, feed_dict=feed_dict)
+             ev_pred_acc_gng_gng,
+             vec_pred_acc_dpa_dual,
+             vec_pred_acc_dpa_dpa,
+             pred_out_dual,
+             pred_out_dpa] = self.session.run(ops_to_eval, feed_dict=feed_dict)
 
             predictions = {
                 'state': ev_hidden_bxtxd,
@@ -454,7 +461,11 @@ class DualTask(RecurrentWhisperer):
                 'ev_acc_dpa_dual': ev_pred_acc_dpa_dual,
                 'ev_acc_gng_dual': ev_pred_acc_gng_dual,
                 'ev_acc_dpa_dpa': ev_pred_acc_dpa_dpa,
-                'ev_acc_gng_gng': ev_pred_acc_gng_gng}
+                'ev_acc_gng_gng': ev_pred_acc_gng_gng,
+                'vec_acc_dpa_dual': vec_pred_acc_dpa_dual,
+                'vec_acc_dpa_dpa': vec_pred_acc_dpa_dpa,
+                'pred_out_dual': pred_out_dual,
+                'pred_out_dpa': pred_out_dpa}
 
             return predictions
 
@@ -563,4 +574,140 @@ class DualTask(RecurrentWhisperer):
     def _update_visualizations(self, train_data=None, valid_data=None):
         '''See docstring in RecurrentWhisperer.'''
         data = self.generate_dualtask_trials()
-    #        self.plot_trials(data)
+#        self.plot_trials(data)
+
+    def plot_trials(self, data, start_time=0, stop_time=None):
+        '''Plots example trials, complete with input pulses, correct outputs,
+        and RNN-predicted outputs.
+
+        Args:
+            data: dict as returned by generate_dualtask_trials.
+
+            start_time (optional): int specifying the first timestep to plot.
+            Default: 0.
+
+            stop_time (optional): int specifying the last timestep to plot.
+            Default: n_time.
+
+        Returns:
+            None.
+        '''
+        hps = self.hps
+        n_batch = self.hps.data_hps['n_batch']
+        n_time = self.hps.data_hps['n_time']
+        gng_time = self.hps.data_hps['gng_time']
+#        n_plot = np.min([hps.n_trials_plot, n_batch])
+        n_plot = 36
+        dpa2_time = data['vec_tau']
+        if gng_time==-1:
+            task_type = data['task_choice']
+        else:
+            task_type = 0
+
+        f = plt.figure(self.fig.number)
+        plt.clf()
+
+        inputs = data['inputs']
+        output = data['output']
+        predictions = self.predict(data)
+        pred_output = predictions['output']
+        ev_acc_dpa = predictions['ev_acc_dpa']
+        ev_acc_dpa_dual = predictions['ev_acc_dpa_dual']
+        ev_acc_gng_dual = predictions['ev_acc_gng_dual']
+        ev_acc_dpa_dpa = predictions['ev_acc_dpa_dpa']
+        ev_acc_gng_gng = predictions['ev_acc_gng_gng']
+        vec_acc_dpa_dual = predictions['vec_acc_dpa_dual']
+        vec_acc_dpa_dpa = predictions['vec_acc_dpa_dpa']
+        pred_out_dual = predictions['pred_out_dual']
+        pred_out_dpa = predictions['pred_out_dpa']
+
+        if stop_time is None:
+            stop_time = n_time
+
+        time_idx = range(start_time, stop_time)
+
+        for trial_idx in range(n_plot):
+            plt.subplot(6, 6, trial_idx+1)
+            if n_plot == 1:
+                plt.title('Example trial', fontweight='bold')
+            else:
+                if gng_time==-1:
+                    if task_type[trial_idx] == 0:
+                        plt.title('Dual-task | Acc DPA %d | Pred %.4e | Out %.2e' %
+                                  (vec_acc_dpa_dual[np.where(np.where(task_type==0)[0]==trial_idx)[0]],
+                                   pred_output[trial_idx, n_time-1, 0],
+                                   output[trial_idx, n_time-1, 0]), fontweight='bold')
+                    elif task_type[trial_idx] == 1:
+                        plt.title('DPA task | Acc DPA %d | Pred %.4e | Out %.2e' %
+                                  (vec_acc_dpa_dpa[np.where(np.where(task_type==1)[0]==trial_idx)[0]],
+                                   pred_output[trial_idx, n_time-1, 0],
+                                   output[trial_idx, n_time-1, 0]),
+                                  fontweight='bold')
+                    else:
+                        plt.title('GNG task | Acc GNG %d' %
+                                  (ev_acc_gng_gng),
+                                  fontweight='bold')
+                else:
+                    plt.title('Example trial %d | Acc %d' % (trial_idx + 1,
+                                                             ev_acc_dpa),
+                                fontweight='bold')
+
+            self._plot_single_trial(
+                inputs[trial_idx, time_idx, :],
+                output[trial_idx, time_idx, :],
+                pred_output[trial_idx, time_idx, :])
+
+            # Only plot x-axis ticks and labels on the bottom subplot
+            if trial_idx < (n_plot-1):
+                plt.xticks([])
+            else:
+                plt.xlabel('Timestep', fontweight='bold')
+
+        f = plt.gcf()
+#        plt.ion()
+#        plt.show()
+#        plt.pause(1e-10)
+        return f
+
+    @staticmethod
+    def _plot_single_trial(input_txd, output_txd, pred_output_txd):
+
+        VERTICAL_SPACING = 2.5
+        [n_time, n_bits] = input_txd.shape
+        tt = range(n_time)
+
+        y_ticks = [VERTICAL_SPACING*bit_idx for bit_idx in range(n_bits)]
+        y_tick_labels = ['S %d' % (bit_idx+1) for bit_idx in range(n_bits)]
+        plt.yticks(y_ticks, y_tick_labels, fontweight='bold')
+        for bit_idx in range(n_bits):
+
+            vertical_offset = VERTICAL_SPACING*bit_idx
+
+            # Input pulses
+            plt.fill_between(
+                tt,
+                vertical_offset + input_txd[:, bit_idx],
+                vertical_offset,
+                step='mid',
+                color='gray')
+
+            # Correct outputs
+            plt.step(
+                tt,
+                vertical_offset + output_txd[:, bit_idx],
+                where='mid',
+                linewidth=2,
+                color='cyan')
+
+            if bit_idx == 0:
+                # RNN outputsp
+                plt.step(
+                    tt,
+                    vertical_offset + pred_output_txd[:, 0],
+                    where='mid',
+                    color='purple',
+                    linewidth=1.5,
+                    linestyle='--')
+
+        plt.xlim(-1, n_time)
+        plt.ylim(-1, n_bits*2+2)

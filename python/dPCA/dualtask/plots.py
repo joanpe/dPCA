@@ -519,6 +519,8 @@ n = np.arange(INST)
 f, ax = plt.subplots()
 ax.scatter(dpa_acc, dual_acc)
 ax.plot([0.4, 1], [0.4, 1], ls='--', color='grey')
+for i, num in enumerate(n):
+    plt.annotate(num, (dpa_acc[i], dual_acc[i]))
 plt.xlabel('DPA acc')
 plt.ylabel('dual DPA acc')
 f.savefig(os.path.join(fig_dir, 'dpa_vs_dual_acc' + str(noise) + '.svg'))
@@ -585,3 +587,69 @@ plt.show()
 
 fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train_dual_vs_dpa' + str(noise) + '.svg'))
 plt.close()
+
+# Count which number of stimulus pairs (s1-s3/s4 or s2-s3/s4) are correct
+# for the conditions that appears s5 or s6 during the distractor
+
+fig_dir_dir = os.path.join(PATH, 'plots')
+data = np.load(os.path.join(fig_dir, 'data_-1_0.0_0_i50_n' + str(noise) + '-' +
+                        str(noise) + '_neu64-64.npz'))
+
+task = data['task']
+stim = data['stim_conf']
+stim_dual = []
+stim_dpa = []
+acc_dual = []
+acc_dpa = []
+for i in range(INST):
+    stim_dual.append(stim[i, task[i, :]==0])
+    stim_dpa.append(stim[i, task[i, :]==1])
+    acc_dual.append(data['acc'][0][7][i]*1)
+    acc_dpa.append(data['acc'][0][8][i]*1)
+
+matdual_inst = []
+matdpa_inst = []
+for i in range(2):
+    matdual = np.zeros((2, 2, 2))
+    for gng in range(2):
+        matdpa = np.zeros((2, 2))
+        for dpa1 in range(2):
+            for dpa2 in range(2):
+                ind_dual = np.logical_and.reduce((stim_dual[i][:, 0]==dpa1,
+                                                stim_dual[i][:, 1]==dpa2,
+                                                stim_dual[i][:, 2]==gng))
+                matdual[dpa1, dpa2, gng] = np.sum(acc_dual[i][ind_dual])
+                ind_dpa = np.logical_and(stim_dpa[i][:, 0]==dpa1,
+                                         stim_dpa[i][:, 1]==dpa2)
+                matdpa[dpa1, dpa2] = np.sum(acc_dpa[i][ind_dpa])
+    plt.figure()
+    ax = plt.subplot(2, 2, 1)
+    norm = matplotlib.colors.Normalize(vmin=0, vmax=1)
+    ax.imshow(matdual[:, :, 0], aspect='auto', label='S5')
+    ax.set_title('Stimulus S5 appears')
+    
+    ax = plt.subplot(2, 2, 2)
+    ax.imshow(matdual[:, :, 1], aspect='auto', label='S6')
+    ax.set_title('Stimulus S6 appears')
+    m = cm.ScalarMappable(cmap=plt.cm.summer, norm=norm)
+    m.set_array([])
+    plt.colorbar(ax=ax.ravel().tolist())    
+    
+    ax = plt.subplot(2, 2, 3)
+    ax.imshow(matdpa, aspect='auto', label='DPA alone')
+    ax.set_title('No distractor')
+    
+    plt.set_xticklabels(['', 'S3', '', 'S4', ''])
+    plt.set_yticklabels(['', 'S1', '', 'S2', ''])
+    
+    
+    if not os.path.exists(fig_dir_dir):
+        os.mkdir(fig_dir_dir)
+        plt.savefig(os.path.join(fig_dir_dir, 'Inst' + str(i) + '.svg'))
+    else:
+        plt.savefig(os.path.join(fig_dir_dir, 'Inst' + str(i) + '.svg'))
+    
+    matdual_inst.append(matdual)
+    matdpa_inst.append(matdpa)
+
+    

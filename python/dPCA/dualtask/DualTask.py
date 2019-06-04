@@ -570,12 +570,6 @@ class DualTask(RecurrentWhisperer):
                                               gng_time, lamb, delay_max, noise)
         return dataset
 
-    def _setup_visualizations(self):
-        '''See docstring in RecurrentWhisperer.'''
-        FIG_WIDTH = 36  # inches
-        FIX_HEIGHT = 9  # inches
-        self.fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
-                              tight_layout=True)
 
     def _update_visualizations(self, train_data=None, valid_data=None):
         '''See docstring in RecurrentWhisperer.'''

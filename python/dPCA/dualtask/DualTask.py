@@ -570,11 +570,11 @@ class DualTask(RecurrentWhisperer):
                                               gng_time, lamb, delay_max, noise)
         return dataset
 
-#
-#    def _update_visualizations(self, train_data=None, valid_data=None):
-#        '''See docstring in RecurrentWhisperer.'''
-#        data = self.generate_dualtask_trials()
-##        self.plot_trials(data)
+
+    def _update_visualizations(self, train_data=None, valid_data=None):
+        '''See docstring in RecurrentWhisperer.'''
+        data = self.generate_dualtask_trials()
+#        self.plot_trials(data)
 #
 #    def plot_trials(self, data, start_time=0, stop_time=None):
 #        '''Plots example trials, complete with input pulses, correct outputs,

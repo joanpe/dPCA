@@ -17,7 +17,7 @@ import random
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-PATH_SAVE = '/home/joanpe/dPCA/python/dPCA/dualtask/'
+PATH_SAVE = '/home/joan/dPCA/python/dPCA/dualtask/'
 PATH_LOAD = '/home/joan/cluster_home/dPCA/python/dPCA/dualtask/'
 sys.path.insert(0, PATH_LOAD)
 
@@ -28,7 +28,7 @@ noise = noise_rng[0]
 # Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 
 # then it runs a ramdom trial either of the dualtask, dpa alone or gng alone.
 gng_rng = np.array(-1)
-gng = gng_rng[0]
+gng = gng_rng
 #gng_rng = np.array([0, 10])
 lamb = np.array([0.0])
 l = lamb[0]
@@ -39,6 +39,8 @@ num_neurons = np.array([64])
 neuron = num_neurons[0]
 # number of RNN instances
 INST = 50
+#Number of example plots to show
+n_plot = 36
 
 load_dir = os.path.join(PATH_LOAD, 'data_trainedwithnoise')
 save_dir = os.path.join(PATH_SAVE, 'data')
@@ -52,14 +54,9 @@ data = np.load(os.path.join(load_dir, 'data_' + str(gng) + '_'
 
 
 #Plot example trials of the RNN
-def _setup_visualizations(self):
-    '''See docstring in RecurrentWhisperer.'''
-    FIG_WIDTH = self.n_plot  # inches
-    FIX_HEIGHT = 9  # inches
-    self.fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
-                          tight_layout=True)
 
-def plot_trials(self, data, start_time=0, stop_time=None):
+def plot_trials(inputs, output, pred_output, vec_acc_dpa_dpa, vec_acc_dpa_dual,
+                task_type, start_time=0, stop_time=None):
     '''Plots example trials, complete with input pulses, correct outputs,
     and RNN-predicted outputs.
 
@@ -102,30 +99,29 @@ def plot_trials(self, data, start_time=0, stop_time=None):
 
     time_idx = range(start_time, stop_time)
 
-    for trial_idx in range(self.n_plot):
-        plt.subplot(self.n_plot/6, self.n_plot/6, trial_idx+1)
-        if self.n_plot == 1:
+    for trial_idx in range(n_plot):
+        plt.subplot(n_plot/6, n_plot/6, trial_idx+1)
+        if n_plot == 1:
             plt.title('Example trial', fontweight='bold')
         else:
             if gng_time==-1:
                 if task_type[trial_idx] == 0:
-                    plt.title('Dual-task | Acc DPA %d | Acc GNG %d' %
-                              (ev_acc_dpa_dual,
-                               ev_acc_gng_dual), fontweight='bold')
+                    plt.title('Dual-task | Acc DPA %d | Pred %.4e | Out %.2e' %
+                                  (vec_acc_dpa_dual[np.where(np.where(task_type==0)[0]==trial_idx)[0]],
+                                   pred_output[trial_idx, n_time-1, 0],
+                                   output[trial_idx, n_time-1, 0]), fontweight='bold')
                 elif task_type[trial_idx] == 1:
-                    plt.title('DPA task | Acc DPA %d' %
-                              (ev_acc_dpa_dpa),
-                              fontweight='bold')
-                else:
-                    plt.title('GNG task | Acc GNG %d' %
-                              (ev_acc_gng_gng),
+                    plt.title('DPA task | Acc DPA %d | Pred %.4e | Out %.2e' %
+                              (vec_acc_dpa_dpa[np.where(np.where(task_type==1)[0]==trial_idx)[0]],
+                               pred_output[trial_idx, n_time-1, 0],
+                               output[trial_idx, n_time-1, 0]),
                               fontweight='bold')
             else:
                 plt.title('Example trial %d | Acc %d' % (trial_idx + 1,
                                                          ev_acc_dpa),
                             fontweight='bold')
 
-        self._plot_single_trial(
+        _plot_single_trial(
             inputs[trial_idx, time_idx, :],
             output[trial_idx, time_idx, :],
             pred_output[trial_idx, time_idx, :])
@@ -142,7 +138,7 @@ def plot_trials(self, data, start_time=0, stop_time=None):
 #        plt.pause(1e-10)
     return f
 
-@staticmethod
+
 def _plot_single_trial(input_txd, output_txd, pred_output_txd):
 
     VERTICAL_SPACING = 2.5
@@ -190,25 +186,33 @@ def _plot_single_trial(input_txd, output_txd, pred_output_txd):
 
 
 # Plot example trials
+
+FIG_WIDTH = n_plot  # inches
+FIX_HEIGHT = 9  # inches
+fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
+                      tight_layout=True)   
+
 for inst in range(INST):
-    self.n_plot = 36
-    if gng_time==-1:
-        task_type = data['task_choice']
+    if gng==-1:
+        task_type = data['task_choice'][inst]
     else:
         task_type = 0
 
-    f = plt.figure(self.fig.number)
+    f = plt.figure(fig.number)
     plt.clf()
-#TODO define inputs etc
-    inputs = data['inputs']
-    output = data['output']
-    pred_output = data['pred_out']
-    ev_acc_dpa = data['acc'][0]
-    ev_acc_dpa_dual = predictions['ev_acc_dpa_dual']
-    ev_acc_gng_dual = predictions['ev_acc_gng_dual']
-    ev_acc_dpa_dpa = predictions['ev_acc_dpa_dpa']
-    ev_acc_gng_gng = predictions['ev_acc_gng_gng']
-    f = self.plot_trials(data)
+
+    inputs = data['inputs'][inst]
+    output = data['output'][inst]
+    pred_output = data['pred_out'][inst]
+    ev_acc_dpa = data['acc'][0][1][inst]
+    ev_acc_dpa_dual = data['acc'][0][3][inst]
+    ev_acc_gng_dual = data['acc'][0][4][inst]
+    ev_acc_dpa_dpa = data['acc'][0][5][inst]
+    ev_acc_gng_gng = data['acc'][0][6][inst]
+    vec_acc_dpa_dual = data['acc'][0][7][inst]
+    vec_acc_dpa_dpa = data['acc'][0][8][inst]
+    f = plot_trials(inputs, output, pred_output, vec_acc_dpa_dpa,
+                    vec_acc_dpa_dual, task_type)
     
     plot_dir = os.path.join(save_dir, 'task_plots/noise' + str(noise) +
                             'lamb' + str(l))
@@ -408,20 +412,25 @@ for inst in range(INST):
 
 
 
-#Accuracy across training
+# Plots for accuracy depending on task.
 
+
+#Accuracy across training
+noise = noise_rng[0]
 plt.figure()
 label_added = False
 for i in range(INST):
-    data_acc = np.load(PATH + '/logs_-1/lamb0.0/noise0.2/delay0/neurons64/inst'
-                   + str(i) + '/cdd99a83bc/accuracies.npz')
-    acc_dpa = data_acc['acc_dpa']
-    acc_gng = data_acc['acc_gng']
-    acc_dpa_dual = data_acc['acc_dpa_dual']
-    acc_gng_dual = data_acc['acc_gng_dual']
-    acc_dpa_dpa = data_acc['acc_dpa_dpa']
-    acc_gng_gng = data_acc['acc_gng_gng']
-    n_epochs = data_acc['n_epochs']
+    data = np.load(PATH_LOAD + '/logs_-1/lamb0.0/noise' + str(noise) +
+                   '/delay0/neurons64/inst' + str(i) +
+                   '/9afbb8777a/accuracies.npz')
+    
+    acc_dpa = data['acc_dpa']
+    acc_gng = data['acc_gng']
+    acc_dpa_dual = data['acc_dpa_dual']
+    acc_gng_dual = data['acc_gng_dual']
+    acc_dpa_dpa = data['acc_dpa_dpa']
+    acc_gng_gng = data['acc_gng_gng']
+    n_epochs = data['n_epochs']
     
     epochs = np.arange(n_epochs//10)
     if not label_added:
@@ -443,12 +452,13 @@ plt.ylabel('Accuracy')
 fig = plt.gcf()
 # plt.show()
 
-fig_dir = os.path.join(PATH, 'data_trainedwithnoise')
-fig.savefig(os.path.join(fig_dir, 'acc_across_train_inst' + str(INST) +
-                         '_noise_' + str(noise) + '.svg'))
+fig.savefig(os.path.join(save_dir, 'acc_across_train_inst' + str(INST) +
+                         '_noise_' + str(noise) + '.png'))
 plt.close()
 
-#Plot mean acc across training
+
+#Plot for the mean accuracy of DPA and dual with all trials
+
 acc_dpa_dual = []
 acc_gng_dual = []
 acc_dpa_dpa = []
@@ -456,17 +466,19 @@ acc_gng_gng = []
 n_epochs = []
 
 for i in range(INST):
-    data_acc = np.load(PATH + '/logs_-1/lamb0.0/noise0.2/delay0/neurons64/inst'
-                   + str(i) + '/cdd99a83bc/accuracies.npz')
-    acc = data_acc['acc_dpa_dual']
+    #TDO find as before
+    data = np.load(PATH_LOAD + '/logs_-1/lamb0.0/noise' + str(noise) +
+                   '/delay0/neurons64/inst' + str(i) +
+                   '/9afbb8777a/accuracies.npz')
+    acc = data['acc_dpa_dual']
     acc_dpa_dual.append(acc)
-    acc = data_acc['acc_gng_dual']
+    acc = data['acc_gng_dual']
     acc_gng_dual.append(acc)
-    acc = data_acc['acc_dpa_dpa']
+    acc = data['acc_dpa_dpa']
     acc_dpa_dpa.append(acc)
-    acc = data_acc['acc_gng_gng']
+    acc = data['acc_gng_gng']
     acc_gng_gng.append(acc)
-    n = data_acc['n_epochs']
+    n = data['n_epochs']
     n_epochs.append(n)
 
 
@@ -493,10 +505,11 @@ acc_gng_gngmean = np.mean(acc_gng_gngstack, axis=1)
 epochs = np.arange(min_epochs)
 
 plt.figure()
-plt.plot(epochs, acc_dpa_dualmean, label='Dual DPA', color='r')
-plt.plot(epochs, acc_gng_dualmean, label='Dual GNG', color='b')
-plt.plot(epochs, acc_dpa_dpamean, label='DPA DPA', color='g')
-plt.plot(epochs, acc_gng_gngmean, label='GNG GNG', color='cyan')
+plt.plot(epochs, acc_dpa_dualmean, label='Dual DPA', color='r', linewidth=3)
+plt.plot(epochs, acc_dpa_dpamean, label='DPA DPA', color='g', linewidth=3)
+for i in range(INST):
+    plt.plot(epochs, acc_dpa_dualstack[:, i], color='r', alpha=0.1)
+    plt.plot(epochs, acc_dpa_dpastack[:, i], color='g', alpha=0.1)
 
 #plt.xlim([0, 100])
 plt.legend()
@@ -506,93 +519,62 @@ fig = plt.gcf()
 #plt.show()
 
 
-fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train' + str(noise) + '.svg'))
+fig.savefig(os.path.join(save_dir, 'mean_acc_across_train' + str(noise) + '.png'))
 plt.close()
 
 
-# Plot accuracy of DPA in dual task against accuracy of DPA in dpa alone
+
+# Plot accuracy of DPA in dual task against accuracy of DPA in dpa alone with numbers
+data = np.load(os.path.join(load_dir, 'data_-1_0.0_0_i50_n' + str(noise) + '-' +
+                            str(noise) + '_neu64-64.npz'))
 
 dual_acc = data['acc'][0][3]
 dpa_acc = data['acc'][0][5]
 n = np.arange(INST)
 
 f, ax = plt.subplots()
-ax.scatter(dpa_acc, dual_acc)
+ax.scatter(dpa_acc, dual_acc, color='b', s=5)
 ax.plot([0.4, 1], [0.4, 1], ls='--', color='grey')
 for i, num in enumerate(n):
     plt.annotate(num, (dpa_acc[i], dual_acc[i]))
 plt.xlabel('DPA acc')
 plt.ylabel('dual DPA acc')
-f.savefig(os.path.join(fig_dir, 'dpa_vs_dual_acc' + str(noise) + '.svg'))
+f.savefig(os.path.join(save_dir, 'dpa_vs_dual_accnumber_' + str(noise) + '.png'))
 
-# Plot accuracy across training of the instances where acc DPA > acc DPA 
-# dual at the end of the training and also acc dpa>0.55
+# Plot accuracy of DPA in dual task against accuracy of DPA in dpa alone without numbers
+data = np.load(os.path.join(PATH_LOAD, 'data_-1_0.0_0_i50_n' + str(noise) + '-' +
+                            str(noise) + '_neu64-64.npz'))
 
-acc_dpa_dual = []
-acc_dpa_dpa = []
-n_epochs = []
-inst_cond = []
-for i in range(INST):
-    data = np.load(PATH + '/logs_-1/lamb0.0/noise0.2/delay0/neurons64/inst'
-                   + str(i) + '/cdd99a83bc/accuracies.npz')
-    if dpa_acc[i] > 0.55:
-        if dual_acc[i] < dpa_acc[i]:
-            acc = data['acc_dpa_dual']
-            acc_dpa_dual.append(acc)
-            acc = data['acc_dpa_dpa']
-            acc_dpa_dpa.append(acc)
-            n = data['n_epochs']
-            n_epochs.append(n)
-            inst_cond.append(i)
-            
-#inst_cond = np.array(inst_cond)
-n = np.shape(n_epochs)[0]
-min_epochs = np.min(tuple(n_epochs[i] for i in range(n)))//10
-acc_dpa_dualstack = acc_dpa_dual[0][0:min_epochs]
-acc_dpa_dpastack = acc_dpa_dpa[0][0:min_epochs]
-for i in range(n-1):
-    acc_dpa_dualstack = np.column_stack((acc_dpa_dualstack,
-                                         acc_dpa_dual[i+1][0:min_epochs]))
-    acc_dpa_dpastack = np.column_stack((acc_dpa_dpastack,
-                                        acc_dpa_dpa[i+1][0:min_epochs]))
+dual_acc = data['acc'][0][3]
+dpa_acc = data['acc'][0][5]
+n = np.arange(INST)
 
-acc_dpa_dualmean = np.mean(acc_dpa_dualstack, axis=1)
-acc_dpa_dpamean = np.mean(acc_dpa_dpastack, axis=1)
+f, ax = plt.subplots()
+ax.scatter(dpa_acc, dual_acc, color='b', s=5)
+ax.plot([0.4, 1], [0.4, 1], ls='--', color='grey')
+plt.xlabel('DPA acc')
+plt.ylabel('dual DPA acc')
+f.savefig(os.path.join(save_dir, 'dpa_vs_dual_acc_' + str(noise) + '.png'))
 
-acc_dpa_dualstd = np.std(acc_dpa_dualstack, axis=1)
-acc_dpa_dpastd = np.std(acc_dpa_dpastack, axis=1)
 
-epochs = np.arange(min_epochs)
+# Bar plot acc dual vs acc dpa
 
 plt.figure()
-plt.plot(epochs, acc_dpa_dualmean, label='Dual DPA', color='r')
-plt.plot(epochs, acc_dpa_dpamean, label='DPA DPA', color='g')
-
-for i, num in enumerate(inst_cond):
-    plt.plot(epochs, acc_dpa_dualstack[:, i], color='r', alpha=0.2)
-    plt.plot(epochs, acc_dpa_dpastack[:, i], color='g', alpha=0.2)
-    plt.annotate(num, (epochs[-1] + 1, acc_dpa_dualstack[-1, i]))
-#plt.fill_between(epochs, acc_dpa_dualmean-acc_dpa_dualstd, acc_dpa_dualmean+
-#                 acc_dpa_dualstd, color='r', alpha=0.5)
-#plt.fill_between(epochs, acc_dpa_dpamean-acc_dpa_dpastd, acc_dpa_dpamean+
-#                 acc_dpa_dpastd, color='g', alpha=0.5)
-
-#plt.xlim([0, 100])
-plt.legend()
-plt.xlabel('Epoch')
-plt.ylabel('Mean accuracy')
-fig = plt.gcf()
-plt.show()
+x = np.arange(2)
+means = [np.mean(dual_acc), np.mean(dpa_acc)]
+plt.bar(x, means, color='b', width=0.3)
+plt.xticks(x, ('Dual-task', 'DPA task'))
+plt.title('Mean accuracy')
+plt.savefig(os.path.join(save_dir, 'mean_acc_bar' + str(noise) + '.png'))
+plt.close('all')
 
 
-fig.savefig(os.path.join(fig_dir, 'mean_acc_across_train_dual_vs_dpa' + str(noise) + '.svg'))
-plt.close()
+
 
 # Count which number of stimulus pairs (s1-s3/s4 or s2-s3/s4) are correct
 # for the conditions that appears s5 or s6 during the distractor
 
-fig_dir_dir = os.path.join(PATH, 'plots')
-data = np.load(os.path.join(fig_dir, 'data_-1_0.0_0_i50_n' + str(noise) + '-' +
+data = np.load(os.path.join(load_dir, 'data_-1_0.0_0_i50_n' + str(noise) + '-' +
                         str(noise) + '_neu64-64.npz'))
 
 task = data['task']
@@ -609,7 +591,7 @@ for i in range(INST):
 
 matdual_inst = []
 matdpa_inst = []
-for i in range(2):
+for i in range(INST):
     matdual = np.zeros((2, 2, 2))
     for gng in range(2):
         matdpa = np.zeros((2, 2))
@@ -622,34 +604,49 @@ for i in range(2):
                 ind_dpa = np.logical_and(stim_dpa[i][:, 0]==dpa1,
                                          stim_dpa[i][:, 1]==dpa2)
                 matdpa[dpa1, dpa2] = np.sum(acc_dpa[i][ind_dpa])
-    plt.figure()
-    ax = plt.subplot(2, 2, 1)
-    norm = matplotlib.colors.Normalize(vmin=0, vmax=1)
-    ax.imshow(matdual[:, :, 0], aspect='auto', label='S5')
-    ax.set_title('Stimulus S5 appears')
-    
-    ax = plt.subplot(2, 2, 2)
-    ax.imshow(matdual[:, :, 1], aspect='auto', label='S6')
-    ax.set_title('Stimulus S6 appears')
-    m = cm.ScalarMappable(cmap=plt.cm.summer, norm=norm)
-    m.set_array([])
-    plt.colorbar(ax=ax.ravel().tolist())    
-    
-    ax = plt.subplot(2, 2, 3)
-    ax.imshow(matdpa, aspect='auto', label='DPA alone')
-    ax.set_title('No distractor')
-    
-    plt.set_xticklabels(['', 'S3', '', 'S4', ''])
-    plt.set_yticklabels(['', 'S1', '', 'S2', ''])
     
     
-    if not os.path.exists(fig_dir_dir):
-        os.mkdir(fig_dir_dir)
-        plt.savefig(os.path.join(fig_dir_dir, 'Inst' + str(i) + '.svg'))
+    
+    fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(9.75, 3))    
+
+    plt.subplots_adjust(wspace=0.4)
+
+#    plt.subplot(2, 2, 1).set_title('Stimulus S5 appears')
+    im = ax[0].imshow(matdual[:, :, 0], cmap='GnBu', vmin=0, vmax=180)
+    ax[0].set_title('Stimulus S5 appears')
+    ax[0].set_xticklabels(['', 'S3', 'S4', ''])
+    ax[0].set_yticklabels(['', 'S1', '', 'S2', ''])
+#    fig.colorbar(im)
+    
+#    plt.subplot(2, 2, 3).set_title('Stimulus S6 appears')
+    im2 = ax[1].imshow(matdual[:, :, 1], cmap='GnBu', vmin=0, vmax=180)
+    ax[1].set_title('Stimulus S6 appears')
+#    plt.colorbar()
+    ax[1].set_xticklabels(['', 'S3', 'S4', ''])
+    ax[1].set_yticklabels(['', 'S1', '', 'S2', ''])
+#    fig.colorbar(im2)
+#    plt.subplot(2, 2, 2).set_title('No distractor')
+    im3 = ax[2].imshow(matdpa, cmap='GnBu', vmin=0, vmax=180)
+    ax[2].set_title('No distractor')
+#    plt.colorbar()
+    ax[2].set_xticklabels(['', 'S3', 'S4', ''])
+    ax[2].set_yticklabels(['', 'S1', '', 'S2', ''])
+    
+    
+    fig.colorbar(im, ax=ax.ravel().tolist(), shrink=0.7)
+    
+    
+       
+    
+    if not os.path.exists(plot_dir):
+        os.mkdir(plot_dir)
+        plt.savefig(os.path.join(plot_dir, 'Inst' + str(i) + '.png'))
     else:
-        plt.savefig(os.path.join(fig_dir_dir, 'Inst' + str(i) + '.svg'))
+        plt.savefig(os.path.join(plot_dir, 'Inst' + str(i) + '.png'))
+    plt.close()
     
     matdual_inst.append(matdual)
     matdpa_inst.append(matdpa)
+
 
     

@@ -575,6 +575,9 @@ class DualTask(RecurrentWhisperer):
         '''See docstring in RecurrentWhisperer.'''
         data = self.generate_dualtask_trials()
 #        self.plot_trials(data)
+    
+    def _setup_visualizations(self):
+        '''See docstring in RecurrentWhisperer.'''
 #
 #    def plot_trials(self, data, start_time=0, stop_time=None):
 #        '''Plots example trials, complete with input pulses, correct outputs,

@@ -154,7 +154,7 @@ def dpa(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
 def gng(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
         mat_conv=[0, 1]):
     gt_dpa = 2
-    choice1, choice2 = 0, 0
+    choice1, choice2 = 2, 2
     # inputs mat
     inputs = np.zeros([n_time, n_bits])
 

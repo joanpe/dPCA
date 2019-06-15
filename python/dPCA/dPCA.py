@@ -166,7 +166,7 @@ class dPCA(BaseEstimator):
 
         """
         self._fit(X,trialX=trialX)
-
+        
         return self.transform(X)
 
     def _get_parameter_combinations(self,join=True):
@@ -945,7 +945,7 @@ class dPCA(BaseEstimator):
                 X_transformed[key] = np.dot(self.D[key].T, X.reshape((X.shape[0],-1))).reshape((self.D[key].shape[1],) + X.shape[1:])
                 self.explained_variance_ratio_[key] = marginal_variances(key)
 
-        return X_transformed
+        return X_transformed, self.explained_variance_ratio_
 
     def inverse_transform(self, X, marginalization):
         """ Transform data back to its original space, i.e.,

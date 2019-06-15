@@ -22,7 +22,7 @@ PATH_LOAD = '/home/joan/cluster_home/dPCA/python/dPCA/dualtask/'
 sys.path.insert(0, PATH_LOAD)
 
 # Noise range for the input to the RNN
-noise_rng = np.array([0.2])
+noise_rng = np.array([0.0])
 noise = noise_rng[0]
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 
@@ -43,7 +43,7 @@ INST = 50
 n_plot = 36
 
 load_dir = os.path.join(PATH_LOAD, 'data_trainedwithnoise')
-save_dir = os.path.join(PATH_SAVE, 'data')
+save_dir = os.path.join(PATH_SAVE, 'Figures')
 
 data = np.load(os.path.join(load_dir, 'data_' + str(gng) + '_'
                                       + str(l) + '_' + str(delay)
@@ -72,27 +72,9 @@ def plot_trials(inputs, output, pred_output, vec_acc_dpa_dpa, vec_acc_dpa_dual,
     Returns:
         None.
     '''
-    hps = {
-        'rnn_type': 'vanilla',
-        'n_hidden': neuron,
-        'min_loss': 1e-6,  # 1e-4
-        'min_learning_rate': 1e-5,
-        'max_n_epochs': 5000,
-        'do_restart_run': True,
-        'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
-        str(noise) + '/delay' + str(delay) + '/neurons' +
-        str(neuron) + '/inst' + str(inst),
-        'data_hps': {
-            'n_batch': 2048,
-            'n_time': 20,
-            'n_bits': 6,
-            'noise': noise,
-            'gng_time': gng,
-            'lamb': lamb,
-            'delay_max': delay_max},
-        }
-    n_time = hps.data_hps['n_time']
-    gng_time = hps.data_hps['gng_time']
+
+    n_time = 20
+    gng_time = gng
 #        n_plot = np.min([hps.n_trials_plot, n_batch])
     if stop_time is None:
         stop_time = n_time
@@ -116,6 +98,8 @@ def plot_trials(inputs, output, pred_output, vec_acc_dpa_dpa, vec_acc_dpa_dual,
                                pred_output[trial_idx, n_time-1, 0],
                                output[trial_idx, n_time-1, 0]),
                               fontweight='bold')
+                else:
+                    plt.title('GNG task | Acc GNG 1', fontweight='bold')
             else:
                 plt.title('Example trial %d | Acc %d' % (trial_idx + 1,
                                                          ev_acc_dpa),
@@ -183,18 +167,17 @@ def _plot_single_trial(input_txd, output_txd, pred_output_txd):
 
 
 
-
-
 # Plot example trials
-
-FIG_WIDTH = n_plot  # inches
-FIX_HEIGHT = 9  # inches
-fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
-                      tight_layout=True)   
+ 
 
 for inst in range(INST):
+    
+    FIG_WIDTH = n_plot  # inches
+    FIX_HEIGHT = 9  # inches
+    fig = plt.figure(figsize=(FIG_WIDTH, FIX_HEIGHT),
+                          tight_layout=True)  
     if gng==-1:
-        task_type = data['task_choice'][inst]
+        task_type = data['task'][inst]
     else:
         task_type = 0
 
@@ -214,13 +197,16 @@ for inst in range(INST):
     f = plot_trials(inputs, output, pred_output, vec_acc_dpa_dpa,
                     vec_acc_dpa_dual, task_type)
     
-    plot_dir = os.path.join(save_dir, 'task_plots/noise' + str(noise) +
-                            'lamb' + str(l))
+    task_dir = os.path.join(save_dir, 'task_plots_noise' + str(noise) + '_lamb'
+                            + str(lamb))
+    plot_dir = os.path.join(save_dir, 'count_plots_noise' + str(noise) + '_lamb'
+                            + str(lamb))
     if os.path.isdir(plot_dir) is False:
+        os.mkdir(task_dir)
         os.mkdir(plot_dir)
-        f.savefig(os.path.join(plot_dir, 'Inst' + str(inst) + '.svg'))
+        f.savefig(os.path.join(task_dir, 'Inst' + str(inst) + '.png'))
     else:
-        f.savefig(os.path.join(plot_dir, 'Inst' + str(inst) + '.svg'))
+        f.savefig(os.path.join(task_dir, 'Inst' + str(inst) + '.png'))
     
     plt.close()
 
@@ -542,7 +528,7 @@ plt.ylabel('dual DPA acc')
 f.savefig(os.path.join(save_dir, 'dpa_vs_dual_accnumber_' + str(noise) + '.png'))
 
 # Plot accuracy of DPA in dual task against accuracy of DPA in dpa alone without numbers
-data = np.load(os.path.join(PATH_LOAD, 'data_-1_0.0_0_i50_n' + str(noise) + '-' +
+data = np.load(os.path.join(load_dir, 'data_-1_0.0_0_i50_n' + str(noise) + '-' +
                             str(noise) + '_neu64-64.npz'))
 
 dual_acc = data['acc'][0][3]

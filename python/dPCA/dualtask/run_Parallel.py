@@ -58,7 +58,7 @@ def trainDualTask(noise, gng, inst, lamb, delay, neuron):
         'min_loss': 1e-6,  # 1e-4
         'min_learning_rate': 1e-5,
         'max_n_epochs': 5000,
-        'do_restart_run': True,
+        'do_restart_run': False,
         'log_dir': './logs_' + str(gng) + '/lamb' + str(lamb) + '/noise' +
         str(noise) + '/delay' + str(delay) + '/neurons' +
         str(neuron) + '/inst' + str(inst),

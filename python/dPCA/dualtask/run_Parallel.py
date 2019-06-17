@@ -29,7 +29,7 @@ from mpl_toolkits.axes_grid1.inset_locator import InsetPosition
 # STEP 1: Train RNNs to solve the dual task *********************************
 # *****************************************************************************
 # Noise range for the input to the RNN
-noise_rng = np.array([0.4])
+noise_rng = np.array([0.6])
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 
 # then it runs a ramdom trial either of the dualtask, dpa alone or gng alone.

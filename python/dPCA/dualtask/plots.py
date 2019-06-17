@@ -22,7 +22,7 @@ PATH_LOAD = '/home/joan/cluster_home/dPCA/python/dPCA/dualtask/'
 sys.path.insert(0, PATH_LOAD)
 
 # Noise range for the input to the RNN
-noise_rng = np.array([0.0])
+noise_rng = np.array([0.4])
 noise = noise_rng[0]
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 
@@ -43,7 +43,9 @@ INST = 50
 n_plot = 36
 
 load_dir = os.path.join(PATH_LOAD, 'data_trainedwithnoise')
-save_dir = os.path.join(PATH_SAVE, 'Figures')
+save_dir = os.path.join(PATH_SAVE, 'Figures_noise_' + str(noise))
+if os.path.isdir(save_dir) is False:
+    os.mkdir(save_dir)
 
 data = np.load(os.path.join(load_dir, 'data_' + str(gng) + '_'
                                       + str(l) + '_' + str(delay)
@@ -408,7 +410,7 @@ label_added = False
 for i in range(INST):
     data = np.load(PATH_LOAD + '/logs_-1/lamb0.0/noise' + str(noise) +
                    '/delay0/neurons64/inst' + str(i) +
-                   '/9afbb8777a/accuracies.npz')
+                   '/1be799f625/accuracies.npz')
     
     acc_dpa = data['acc_dpa']
     acc_gng = data['acc_gng']
@@ -455,7 +457,7 @@ for i in range(INST):
     #TDO find as before
     data = np.load(PATH_LOAD + '/logs_-1/lamb0.0/noise' + str(noise) +
                    '/delay0/neurons64/inst' + str(i) +
-                   '/9afbb8777a/accuracies.npz')
+                   '/1be799f625/accuracies.npz')
     acc = data['acc_dpa_dual']
     acc_dpa_dual.append(acc)
     acc = data['acc_gng_dual']
@@ -590,9 +592,7 @@ for i in range(INST):
                 ind_dpa = np.logical_and(stim_dpa[i][:, 0]==dpa1,
                                          stim_dpa[i][:, 1]==dpa2)
                 matdpa[dpa1, dpa2] = np.sum(acc_dpa[i][ind_dpa])
-    
-    
-    
+                
     fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(9.75, 3))    
 
     plt.subplots_adjust(wspace=0.4)
@@ -620,10 +620,6 @@ for i in range(INST):
     
     
     fig.colorbar(im, ax=ax.ravel().tolist(), shrink=0.7)
-    
-    
-       
-    
     if not os.path.exists(plot_dir):
         os.mkdir(plot_dir)
         plt.savefig(os.path.join(plot_dir, 'Inst' + str(i) + '.png'))

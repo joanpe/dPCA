@@ -9,8 +9,8 @@ import numpy as np
 import matplotlib.pylab as plt
 import random
 
-def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
-                       delay_max=0, noise=0, mat_conv=[0, 1]):
+def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb,
+                       delay_max, noise, mat_conv=[0, 1]):
     gng_time = 10
     # Get random task type trials
     task_choice = np.random.choice(3, size=n_batch)
@@ -22,16 +22,16 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
         if task_choice[ind_btch]==0:
             # Get trial for Dualtask
             inp, out, conf, tau = dual_task(n_time, n_bits, gng_time,
-                                            lamb=0, delay_max=0, noise=0,
+                                            lamb, delay_max, noise,
                                             mat_conv=[0, 1])
         elif task_choice[ind_btch]==1:
             # Get trial for DPA
-            inp, out, conf, tau = dpa(n_time, n_bits, gng_time, lamb=0,
-                                      delay_max=0, noise=0, mat_conv=[0, 1])
+            inp, out, conf, tau = dpa(n_time, n_bits, gng_time, lamb,
+                                      delay_max, noise, mat_conv=[0, 1])
         else:
             # Get trial for GNG
-            inp, out, conf, tau = gng(n_time, n_bits, gng_time, lamb=0,
-                                      delay_max=0, noise=0, mat_conv=[0, 1])
+            inp, out, conf, tau = gng(n_time, n_bits, gng_time, lamb,
+                                      delay_max, noise, mat_conv=[0, 1])
 
         # Add together all trials in a batch
         inputs.append(inp)
@@ -50,7 +50,7 @@ def get_inputs_outputs(n_batch, n_time, n_bits, gng_time, lamb=0,
             'stim_conf': stim_conf, 'vec_tau': vec_tau}
 
 # Dual Task stimulus structure
-def dual_task(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
+def dual_task(n_time, n_bits, gng_time, lamb, delay_max, noise,
               mat_conv=[0, 1]):
     # inputs mat
     inputs = np.zeros([n_time, n_bits])
@@ -107,7 +107,7 @@ def dual_task(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
     return inputs, outputs, stim_conf, tau
 
 # DPA task stimulus structure
-def dpa(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
+def dpa(n_time, n_bits, gng_time, lamb, delay_max, noise,
         mat_conv=[0, 1]):
     gt_gng = 2
     # inputs mat
@@ -152,7 +152,7 @@ def dpa(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
     return inputs, outputs, stim_conf, tau
 
 # Go no Go task stimulus structure
-def gng(n_time, n_bits, gng_time, lamb=0, delay_max=0, noise=0,
+def gng(n_time, n_bits, gng_time, lamb, delay_max, noise,
         mat_conv=[0, 1]):
     gt_dpa = 2
     choice1, choice2 = 2, 2

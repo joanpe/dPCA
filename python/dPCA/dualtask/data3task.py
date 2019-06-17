@@ -97,7 +97,6 @@ def dual_task(n_time, n_bits, gng_time, lamb, delay_max, noise,
     outputs[gng_time, 0] = gt_gng
 
     # Adding noise to the inputs
-    print(noise)
     inputs += np.random.normal(scale=noise, size=inputs.shape)
 
     # stim configuration

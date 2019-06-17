@@ -565,7 +565,6 @@ class DualTask(RecurrentWhisperer):
             dataset = data3task.get_inputs_outputs(n_batch, n_time, n_bits,
                                                    gng_time, lamb, delay_max,
                                                    noise)
-            print(noise)
         else:
             dataset = data.get_inputs_outputs(n_batch, n_time, n_bits,
                                               gng_time, lamb, delay_max, noise)

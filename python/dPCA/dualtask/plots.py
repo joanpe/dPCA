@@ -22,7 +22,7 @@ PATH_LOAD = '/home/joan/cluster_home/dPCA/python/dPCA/dualtask/'
 sys.path.insert(0, PATH_LOAD)
 
 # Noise range for the input to the RNN
-noise_rng = np.array([0.4])
+noise_rng = np.array([0.2])
 noise = noise_rng[0]
 #noise_rng = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
 # Time of appearence of the go- no go task. 0 for no task. if gng_rng = [-1] 

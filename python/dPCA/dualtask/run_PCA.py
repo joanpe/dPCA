@@ -245,6 +245,11 @@ for inst in range(INST):
     acc_dual = data['acc'][0][3][inst]
     stim_conf = np.array(data['stim_conf'][inst])
     
+    data = {'stim_conf': stim_conf, 'state': state, 'task': task,
+            'acc_dpa': acc_dpa, 'acc_dual': acc_dual,
+            'acc_dpa_trial': acc_dpa_trial, 'acc_dual_trial': acc_dual_trial}
+    np.savez(os.path.join(PATH_SAVE, 'data' + str(inst)), **data)
+    
     if np.logical_and(acc_dpa > 0.55, acc_dual > 0.55):
         '''ANALYSES 2: PCA'''
         # Activations of neurons for time = dpa2time -1 :
